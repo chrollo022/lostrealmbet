@@ -2,15 +2,15 @@
 -- SUPREME CASINO - IN-GAME GTPS CLOUD SYNC ENGINE
 -- Universal Multi-Hook Architecture (Command + Chat + Action)
 -- Guaranteed to work across all GrowServer / GTPS variants
--- Default GTPS Port: 21184
+-- Default GTPS Port: 25741
 -- ============================================================
 
 local ITEM_WL  = 242
 local ITEM_DL  = 1796
 local ITEM_BGL = 7188
 
-local DEFAULT_GTPS_PORT = 21184
-local SECRET_KEY = "supreme_gtps_secret_auth_token_21184"
+local DEFAULT_GTPS_PORT = 25741
+local SECRET_KEY = "supreme_gtps_secret_auth_token_25741"
 local WEB_API_URL = "http://localhost:3000/api"
 
 local DB_KEY = "SUPREME_ACCOUNTS_V1"
@@ -21,6 +21,13 @@ local DEV_ROLE = 51
 local accounts = {}
 local playerLinks = {}
 local dirty = false
+
+-- Safe HTTP POST with mandatory 3rd argument (content-type)
+local function safeHttpPost(url, jsonPayload)
+    if type(http) == "table" and type(http.post) == "function" then
+        http.post(url, tostring(jsonPayload or "{}"), "application/json")
+    end
+end
 
 -- ============================================================
 -- HELPER FUNCTIONS
@@ -224,10 +231,8 @@ local function handleLinkCode(player, code)
     end
 
     -- Webhook to Node.js backend
-    if type(http) == "table" and type(http.post) == "function" then
-        local postPayload = string.format('{"growid":"%s","code":"%s"}', cleanGrowID, code)
-        http.post(WEB_API_URL .. "/gtps/link-growid", postPayload)
-    end
+    local postPayload = string.format('{"growid":"%s","code":"%s"}', cleanGrowID, code)
+    safeHttpPost(WEB_API_URL .. "/gtps/link-growid", postPayload)
 
     if type(player.onConsoleMessage) == "function" then
         player:onConsoleMessage("`2[SUPREME] `wAccount linked successfully! Your in-game character is synced with Supreme Casino.``")
@@ -357,10 +362,8 @@ local function processCasinoCommand(world, player, fullCommand)
         if type(player.playAudio) == "function" then player:playAudio("cash_register.wav") end
 
         -- Webhook sync to Node.js server
-        if type(http) == "table" and type(http.post) == "function" then
-            local payload = string.format('{"growId":"%s","currency":"%s","amount":%d,"secretKey":"%s"}', cleanGrowID, currencyName, amt, SECRET_KEY)
-            http.post(WEB_API_URL .. "/gtps/deposit-webhook", payload)
-        end
+        local payload = string.format('{"growId":"%s","currency":"%s","amount":%d,"secretKey":"%s"}', cleanGrowID, currencyName, amt, SECRET_KEY)
+        safeHttpPost(WEB_API_URL .. "/gtps/deposit-webhook", payload)
         return true
     end
 
@@ -420,10 +423,8 @@ local function processCasinoCommand(world, player, fullCommand)
         if type(player.playAudio) == "function" then player:playAudio("cash_register.wav") end
 
         -- Webhook sync
-        if type(http) == "table" and type(http.post) == "function" then
-            local payload = string.format('{"growId":"%s","currency":"%s","amount":%d,"secretKey":"%s"}', cleanGrowID, currencyName, amt, SECRET_KEY)
-            http.post(WEB_API_URL .. "/gtps/withdraw-webhook", payload)
-        end
+        local payload = string.format('{"growId":"%s","currency":"%s","amount":%d,"secretKey":"%s"}', cleanGrowID, currencyName, amt, SECRET_KEY)
+        safeHttpPost(WEB_API_URL .. "/gtps/withdraw-webhook", payload)
         return true
     end
 

@@ -373,7 +373,7 @@ export const AdminModal: React.FC = () => {
                     value={customPort}
                     onChange={(e) => setCustomPort(e.target.value)}
                     className="w-full bg-[#101928] border border-[#1f2f4a] rounded-xl pl-16 pr-4 py-2.5 text-sm font-mono font-bold text-cyan-300 outline-none focus:border-cyan-400"
-                    placeholder="21184"
+                    placeholder="25741"
                   />
                 </div>
                 <button

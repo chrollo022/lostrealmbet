@@ -35,13 +35,13 @@ const liveBetsHistory = [];
 const activeBattles = [];
 
 let gtpsConfig = {
-  port: 21184,
-  secretKey: 'supreme_gtps_secret_auth_token_21184',
+  port: 25741,
+  secretKey: 'supreme_gtps_secret_auth_token_25741',
   status: 'online',
   activeSyncCount: 0,
 };
 
-// GTPS API Endpoints (Synced with GTPS Server on Port 21184)
+// GTPS API Endpoints (Synced with GTPS Server on Port 25741)
 app.get('/api/gtps/status', (req, res) => {
   res.json({
     status: gtpsConfig.status,

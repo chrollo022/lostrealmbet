@@ -187,7 +187,7 @@ export const GameProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   const [gtpsPort, setGtpsPortState] = useState<number>(() => {
     const saved = localStorage.getItem('supreme_gtps_port');
-    return saved ? parseInt(saved, 10) || 21184 : 21184;
+    return saved ? parseInt(saved, 10) || 25741 : 25741;
   });
 
   const setGtpsPort = (port: number) => {

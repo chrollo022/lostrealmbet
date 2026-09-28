@@ -127,7 +127,7 @@ export const AuthModal: React.FC<{ isOpen: boolean; onClose: () => void; initial
               </div>
               <div>
                 <span className="text-xs font-black text-white block">GTPS In-Game Cashier</span>
-                <span className="text-[11px] text-cyan-300 font-bold">Port 21184 · Deposit & Withdraw In-Game</span>
+                <span className="text-[11px] text-cyan-300 font-bold">Port 25741 · Deposit & Withdraw In-Game</span>
               </div>
             </div>
             <span className="text-[10px] uppercase font-black px-2 py-0.5 rounded bg-cyan-500/20 text-cyan-300 border border-cyan-500/30">
