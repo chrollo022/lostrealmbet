@@ -4,6 +4,7 @@ import { Header } from './components/layout/Header';
 import { Sidebar } from './components/layout/Sidebar';
 import { Dashboard } from './components/dashboard/Dashboard';
 import { WalletModal } from './components/wallet/WalletModal';
+import { AdminModal } from './components/admin/AdminModal';
 import { AuthModal } from './components/auth/AuthModal';
 import { ChatDrawer } from './components/chat/ChatDrawer';
 import { MinesGame } from './components/games/MinesGame';
@@ -134,6 +135,9 @@ const CasinoApp: React.FC = () => {
 
       {/* Wallet Cashier Modal */}
       <WalletModal />
+
+      {/* Admin Management & GTPS Configuration Modal */}
+      <AdminModal />
 
       {/* Auth Modal (Login / Register with 500 DLS bonus) */}
       <AuthModal

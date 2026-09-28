@@ -36,6 +36,93 @@ import {
 export type BattleMode = 'normal' | 'bonus' | 'shared';
 export type PlayerConfig = '1v1' | '1v1v1' | '1v1v1v1' | '1v1v1v1v1' | '2v2' | '3v3' | '2v2v2';
 
+export const STARTER_BATTLE_CASES: CustomCase[] = [
+  {
+    id: 'starter_case_novice',
+    name: 'Novice Relic',
+    price: 10,
+    color: '#0074e4',
+    image: '/assets/cases.png',
+    items: [
+      { id: '15', name: 'Red Crystal', image: '/assets/items/15.png', price: 0.1, chance: 40, rarity: 'common', color: '#94a3b8' },
+      { id: '64', name: 'Ancestral Seed of Life', image: '/assets/items/64.png', price: 1.5, chance: 30, rarity: 'uncommon', color: '#38bdf8' },
+      { id: '94', name: 'Alaskan King Crab Crown', image: '/assets/items/94.png', price: 5.95, chance: 20, rarity: 'rare', color: '#a855f7' },
+      { id: '9', name: "Rayman's Fist", image: '/assets/items/9.png', price: 35, chance: 10, rarity: 'legendary', color: '#ef4444' },
+    ],
+  },
+  {
+    id: 'starter_case_vault',
+    name: 'High Roller Vault',
+    price: 50,
+    color: '#a855f7',
+    image: '/assets/cases.png',
+    items: [
+      { id: '64', name: 'Ancestral Seed of Life', image: '/assets/items/64.png', price: 1.5, chance: 35, rarity: 'uncommon', color: '#38bdf8' },
+      { id: '94', name: 'Alaskan King Crab Crown', image: '/assets/items/94.png', price: 5.95, chance: 35, rarity: 'rare', color: '#a855f7' },
+      { id: '9', name: "Rayman's Fist", image: '/assets/items/9.png', price: 35, chance: 20, rarity: 'epic', color: '#f59e0b' },
+      { id: '269', name: 'Golden Relic Dragon', image: '/assets/items/269.png', price: 180, chance: 10, rarity: 'legendary', color: '#ef4444' },
+    ],
+  },
+  {
+    id: 'starter_case_whale',
+    name: 'Supreme High Roller',
+    price: 200,
+    color: '#ef4444',
+    image: '/assets/cases.png',
+    items: [
+      { id: '94', name: 'Alaskan King Crab Crown', image: '/assets/items/94.png', price: 5.95, chance: 30, rarity: 'rare', color: '#a855f7' },
+      { id: '9', name: "Rayman's Fist", image: '/assets/items/9.png', price: 35, chance: 40, rarity: 'epic', color: '#f59e0b' },
+      { id: '269', name: 'Golden Relic Dragon', image: '/assets/items/269.png', price: 180, chance: 20, rarity: 'legendary', color: '#ef4444' },
+      { id: 'bgl_chest', name: '10x Blue Gem Locks', image: '/assets/BGLS.png', price: 1000, chance: 10, rarity: 'legendary', color: '#ef4444' },
+    ],
+  },
+];
+
+export const STARTER_LOBBY_BATTLES: BattleInstance[] = [
+  {
+    id: 'battle_demo_1',
+    mode: 'normal',
+    playerConfig: '1v1',
+    cases: [STARTER_BATTLE_CASES[0], STARTER_BATTLE_CASES[0]],
+    players: [
+      {
+        id: 'bot_vortex',
+        name: 'VortexBot 🤖',
+        avatar: '🤖',
+        isBot: true,
+        isUser: false,
+        unboxedItems: [],
+        totalValue: 0,
+      },
+    ],
+    totalCostPerPlayer: 20,
+    totalPot: 40,
+    status: 'open',
+    createdAt: Date.now() - 60000,
+  },
+  {
+    id: 'battle_demo_2',
+    mode: 'normal',
+    playerConfig: '1v1',
+    cases: [STARTER_BATTLE_CASES[1]],
+    players: [
+      {
+        id: 'bot_growking',
+        name: 'GrowKing 🤖',
+        avatar: '👑',
+        isBot: true,
+        isUser: false,
+        unboxedItems: [],
+        totalValue: 0,
+      },
+    ],
+    totalCostPerPlayer: 50,
+    totalPot: 100,
+    status: 'open',
+    createdAt: Date.now() - 120000,
+  },
+];
+
 export interface BattlePlayer {
   id: string;
   name: string;
@@ -78,6 +165,7 @@ export const CaseBattlesGame: React.FC<{ onBack: () => void }> = ({ onBack }) =>
     checkCanPlayGame,
     showToast,
     user,
+    setActiveGame,
   } = useGame();
 
   // Load cases from local storage or defaults
@@ -89,7 +177,7 @@ export const CaseBattlesGame: React.FC<{ onBack: () => void }> = ({ onBack }) =>
         if (Array.isArray(parsed) && parsed.length > 0) return parsed;
       } catch {}
     }
-    return DEFAULT_CASES;
+    return STARTER_BATTLE_CASES;
   });
 
   // Main View: 'lobby' | 'create' | 'arena' | 'blueprints'
@@ -107,11 +195,36 @@ export const CaseBattlesGame: React.FC<{ onBack: () => void }> = ({ onBack }) =>
     if (saved) {
       try {
         const parsed = JSON.parse(saved);
-        if (Array.isArray(parsed)) return parsed;
+        if (Array.isArray(parsed) && parsed.length > 0) return parsed;
       } catch {}
     }
-    return [];
+    return STARTER_LOBBY_BATTLES;
   });
+
+  // Precomputed Deterministic Engine Refs (Survives Refresh & Interruption)
+  const precomputedRoundsRef = useRef<{ [roundIdx: number]: { [playerIdx: number]: CaseItemDrop } }>({});
+  const precomputedWinnerRef = useRef<{ winner: BattlePlayer; totalLootWon: number } | null>(null);
+
+  // Auto-recovery on mount if interrupted
+  useEffect(() => {
+    try {
+      const pendingStr = localStorage.getItem('supreme_active_battle_pending');
+      if (pendingStr) {
+        const battle = JSON.parse(pendingStr);
+        if (battle && battle.precomputedWinnerId && !battle.payoutAwarded) {
+          if (battle.precomputedWinnerIsUser) {
+            const wonAmount = Number(battle.precomputedLootTotal || 0);
+            if (wonAmount > 0) {
+              awardPayout(wonAmount, 'Restored Case Battle Victory', 1, 0);
+              showToast(`🏆 Restored Case Battle Victory: Awarded ${wonAmount} DLS from your battle!`, 'success', 'Battle Restored');
+            }
+          }
+          battle.payoutAwarded = true;
+          localStorage.setItem('supreme_active_battle_pending', JSON.stringify(battle));
+        }
+      }
+    } catch {}
+  }, []);
 
   // Create Battle Form State (Matches media_1789565632571.png)
   const [createMode, setCreateMode] = useState<BattleMode>('normal');
@@ -297,7 +410,7 @@ export const CaseBattlesGame: React.FC<{ onBack: () => void }> = ({ onBack }) =>
   // Cancel an open battle created by the user
   const handleCancelBattle = (battle: BattleInstance) => {
     sound.playClick();
-    awardPayout(battle.totalCostPerPlayer, 'Cancelled Case Battle');
+    awardPayout(battle.totalCostPerPlayer, 'Cancelled Case Battle', 1, battle.totalCostPerPlayer);
     setBattles((prev) => {
       const updated = prev.filter((b) => b.id !== battle.id);
       try {
@@ -308,12 +421,130 @@ export const CaseBattlesGame: React.FC<{ onBack: () => void }> = ({ onBack }) =>
     showToast('Battle cancelled and bet refunded.', 'info', 'Battle Cancelled');
   };
 
+  // Call bots to immediately fill empty slots and start battle
+  const handleCallBotsAndStart = (battle: BattleInstance) => {
+    sound.playClick();
+    const maxSlots = battle.playerConfig === '1v1' ? 2 : battle.playerConfig === '1v1v1' ? 3 : battle.playerConfig === '1v1v1v1' ? 4 : 2;
+    const needed = maxSlots - battle.players.length;
+    if (needed <= 0) {
+      startArenaBattle(battle);
+      return;
+    }
+
+    const botNames = ['ShadowBot 🤖', 'VortexBot 🤖', 'GrowMaster 🤖', 'PixelPro 🤖'];
+    const botAvatars = ['🤖', '⚡', '👑', '🔥'];
+    const newBots: BattlePlayer[] = [];
+
+    for (let i = 0; i < needed; i++) {
+      newBots.push({
+        id: `bot_${Date.now()}_${i}`,
+        name: botNames[(battle.players.length + i) % botNames.length],
+        avatar: botAvatars[(battle.players.length + i) % botAvatars.length],
+        isBot: true,
+        isUser: false,
+        unboxedItems: [],
+        totalValue: 0,
+      });
+    }
+
+    const fullBattle: BattleInstance = {
+      ...battle,
+      players: [...battle.players, ...newBots],
+      status: 'in-progress',
+    };
+
+    setBattles((prev) => prev.map((b) => (b.id === battle.id ? fullBattle : b)));
+    startArenaBattle(fullBattle);
+  };
+
   // =========================================================================
-  // BATTLE ARENA ENGINE: Round-by-Round Simultaneous CS2 Spinning
+  // BATTLE ARENA ENGINE: Deterministic CS2 Simultaneous Spinning
   // =========================================================================
   const ARENA_WIN_INDEX = 45;
 
   const startArenaBattle = (battle: BattleInstance) => {
+    // 1. Precompute all rounds deterministically
+    const precomputedRounds: { [roundIdx: number]: { [playerIdx: number]: CaseItemDrop } } = {};
+    const playerTotals: { [pIdx: number]: number } = {};
+    const playerItems: { [pIdx: number]: CaseItemDrop[] } = {};
+
+    battle.players.forEach((_, pIdx) => {
+      playerTotals[pIdx] = 0;
+      playerItems[pIdx] = [];
+    });
+
+    battle.cases.forEach((cCase, rIdx) => {
+      precomputedRounds[rIdx] = {};
+      const items = (cCase && cCase.items && cCase.items.length > 0) ? cCase.items : STARTER_BATTLE_CASES[0].items;
+      const totalWeight = items.reduce((acc, it) => acc + (it.chance || 1), 0);
+
+      battle.players.forEach((_, pIdx) => {
+        let rand = Math.random() * totalWeight;
+        let winnerItem = items[0];
+        for (const it of items) {
+          if (rand <= (it.chance || 1)) {
+            winnerItem = it;
+            break;
+          }
+          rand -= (it.chance || 1);
+        }
+        precomputedRounds[rIdx][pIdx] = winnerItem;
+        playerTotals[pIdx] = Number((playerTotals[pIdx] + winnerItem.price).toFixed(2));
+        playerItems[pIdx].push(winnerItem);
+      });
+    });
+
+    // 2. Determine winner
+    let finalWinner = battle.players[0];
+    if (battle.crazyMode) {
+      let minVal = Infinity;
+      battle.players.forEach((p, pIdx) => {
+        if (playerTotals[pIdx] < minVal) {
+          minVal = playerTotals[pIdx];
+          finalWinner = p;
+        }
+      });
+    } else if (battle.biggestPull) {
+      let maxSingle = -1;
+      battle.players.forEach((p, pIdx) => {
+        playerItems[pIdx].forEach((it) => {
+          if (it.price > maxSingle) {
+            maxSingle = it.price;
+            finalWinner = p;
+          }
+        });
+      });
+    } else {
+      let maxVal = -1;
+      battle.players.forEach((p, pIdx) => {
+        if (playerTotals[pIdx] > maxVal) {
+          maxVal = playerTotals[pIdx];
+          finalWinner = p;
+        }
+      });
+    }
+
+    // Total loot won across all players in the battle
+    const totalLootWon = Number(Object.values(playerTotals).reduce((sum, val) => sum + val, 0).toFixed(2));
+
+    precomputedRoundsRef.current = precomputedRounds;
+    precomputedWinnerRef.current = { winner: finalWinner, totalLootWon };
+
+    // Save pending battle to localStorage so reload/disconnect NEVER loses winnings!
+    try {
+      localStorage.setItem(
+        'supreme_active_battle_pending',
+        JSON.stringify({
+          battleId: battle.id,
+          precomputedWinnerId: finalWinner.id,
+          precomputedWinnerIsUser: finalWinner.isUser,
+          precomputedLootTotal: totalLootWon,
+          payoutAwarded: false,
+          timestamp: Date.now(),
+        })
+      );
+    } catch {}
+
     setActiveBattle(battle);
     setCurrentRoundIdx(0);
     setArenaSpinning(false);
@@ -331,34 +562,24 @@ export const CaseBattlesGame: React.FC<{ onBack: () => void }> = ({ onBack }) =>
 
   const runBattleRound = (battle: BattleInstance, roundIdx: number) => {
     if (roundIdx >= battle.cases.length) {
-      // Battle Finished: Determine Winner!
       finishBattle(battle);
       return;
     }
 
     setCurrentRoundIdx(roundIdx);
     const currentCase = battle.cases[roundIdx];
+    const items = (currentCase && currentCase.items && currentCase.items.length > 0) ? currentCase.items : STARTER_BATTLE_CASES[0].items;
+
     const roundWinners: { [playerIdx: number]: CaseItemDrop } = {};
     const reels: { [playerIdx: number]: CaseItemDrop[] } = {};
     const resetOffsets: { [pIdx: number]: number } = {};
     const resetTransitions: { [pIdx: number]: string } = {};
 
     battle.players.forEach((_, pIdx) => {
-      // 1. Pick Winner for player based on chances
-      const items = currentCase.items;
-      const totalWeight = items.reduce((acc, it) => acc + (it.chance || 1), 0);
-      let rand = Math.random() * totalWeight;
-      let winner = items[0];
-      for (const it of items) {
-        if (rand <= (it.chance || 1)) {
-          winner = it;
-          break;
-        }
-        rand -= (it.chance || 1);
-      }
+      const winner = precomputedRoundsRef.current[roundIdx]?.[pIdx] || items[0];
       roundWinners[pIdx] = winner;
 
-      // 2. Build 60-card reel strip
+      // Build 60-card reel strip
       const strip: CaseItemDrop[] = [];
       for (let i = 0; i < 60; i++) {
         if (i === ARENA_WIN_INDEX) {
@@ -428,34 +649,51 @@ export const CaseBattlesGame: React.FC<{ onBack: () => void }> = ({ onBack }) =>
   const finishBattle = (battle: BattleInstance) => {
     setArenaFinished(true);
 
-    let winner = battle.players[0];
-
-    if (battle.crazyMode) {
-      // Crazy Mode: LOWEST total value unboxed wins!
-      winner = [...battle.players].sort((a, b) => a.totalValue - b.totalValue)[0];
-    } else if (battle.biggestPull) {
-      // Biggest Pull: Player with the single most expensive item wins!
-      let maxSinglePrice = -1;
-      battle.players.forEach((p) => {
-        p.unboxedItems.forEach((it) => {
-          if (it.price > maxSinglePrice) {
-            maxSinglePrice = it.price;
-            winner = p;
-          }
-        });
-      });
-    } else {
-      // Normal Mode: HIGHEST total value unboxed wins!
-      winner = [...battle.players].sort((a, b) => b.totalValue - a.totalValue)[0];
-    }
+    const { winner, totalLootWon } = precomputedWinnerRef.current || {
+      winner: battle.players[0],
+      totalLootWon: Number(battle.players.reduce((sum, p) => sum + p.totalValue, 0).toFixed(2)),
+    };
 
     setBattleWinner(winner);
 
-    // If current user is the winner, award full pot!
+    // Check if recovery already awarded it
+    let alreadyAwarded = false;
+    try {
+      const pendingStr = localStorage.getItem('supreme_active_battle_pending');
+      if (pendingStr) {
+        const parsed = JSON.parse(pendingStr);
+        if (parsed.battleId === battle.id && parsed.payoutAwarded) {
+          alreadyAwarded = true;
+        }
+      }
+    } catch {}
+
+    // If current user is the winner, award total loot won!
+    // E.g. When paying 200 DL and getting 5 DL in loot, awards 5 DL (NOT 205 DL!)
     if (winner.isUser) {
-      sound.playCashout();
-      awardPayout(battle.totalPot, `Won Case Battle against ${battle.players.length - 1} opponents!`);
-      showToast(`🏆 Victory! You won the entire pot of ${battle.totalPot} DLS!`, 'success', 'Battle Won!');
+      if (!alreadyAwarded) {
+        sound.playCashout();
+        const mult = battle.totalCostPerPlayer > 0 ? Number((totalLootWon / battle.totalCostPerPlayer).toFixed(2)) : 1;
+        awardPayout(
+          totalLootWon,
+          `Won Case Battle (${battle.cases.length} Rounds)`,
+          mult,
+          battle.totalCostPerPlayer
+        );
+        showToast(`🏆 Victory! You won ${totalLootWon} DLS in unboxed items!`, 'success', 'Battle Won!');
+        try {
+          localStorage.setItem(
+            'supreme_active_battle_pending',
+            JSON.stringify({
+              battleId: battle.id,
+              precomputedWinnerId: winner.id,
+              precomputedWinnerIsUser: true,
+              precomputedLootTotal: totalLootWon,
+              payoutAwarded: true,
+            })
+          );
+        } catch {}
+      }
     } else {
       sound.playExplosion();
       showToast(`${winner.name} won the battle with ${winner.totalValue} DLS total.`, 'info', 'Battle Finished');
@@ -479,29 +717,46 @@ export const CaseBattlesGame: React.FC<{ onBack: () => void }> = ({ onBack }) =>
               <span>Back to Games</span>
             </button>
 
+            {/* Switch between Mystery Cases and Case Battles */}
+            <div className="flex items-center bg-[#070c14] p-1 rounded-2xl border border-[#1b283d]">
+              <button
+                onClick={() => setActiveGame('cases')}
+                className="flex items-center gap-2 px-3.5 py-2 rounded-xl font-bold text-xs text-slate-400 hover:text-white transition cursor-pointer"
+              >
+                <Gift className="w-4 h-4 text-purple-400" />
+                <span>Mystery Cases</span>
+              </button>
+              <button
+                className="flex items-center gap-2 px-3.5 py-2 rounded-xl font-black text-xs bg-[#0074e4] text-white shadow-lg shadow-[#0074e4]/25 cursor-default"
+              >
+                <Swords className="w-4 h-4 text-amber-400" />
+                <span>Case Battles</span>
+              </button>
+            </div>
+
             {/* Battles vs Blueprints Tabs */}
             <div className="flex items-center bg-[#070c14] p-1 rounded-2xl border border-[#1b283d]">
               <button
                 onClick={() => setActiveTab('battles')}
-                className={`flex items-center gap-2 px-5 py-2.5 rounded-xl font-black text-xs transition cursor-pointer ${
+                className={`flex items-center gap-2 px-4 py-2 rounded-xl font-black text-xs transition cursor-pointer ${
                   activeTab === 'battles'
-                    ? 'bg-[#0074e4] text-white shadow-lg shadow-[#0074e4]/25'
+                    ? 'bg-[#18263e] text-white shadow border border-[#273d62]'
                     : 'text-slate-400 hover:text-white'
                 }`}
               >
-                <Swords className="w-4 h-4" />
+                <Swords className="w-3.5 h-3.5" />
                 <span>Battles</span>
               </button>
 
               <button
                 onClick={() => setActiveTab('blueprints')}
-                className={`flex items-center gap-2 px-5 py-2.5 rounded-xl font-black text-xs transition cursor-pointer ${
+                className={`flex items-center gap-2 px-4 py-2 rounded-xl font-black text-xs transition cursor-pointer ${
                   activeTab === 'blueprints'
-                    ? 'bg-[#0074e4] text-white shadow-lg shadow-[#0074e4]/25'
+                    ? 'bg-[#18263e] text-white shadow border border-[#273d62]'
                     : 'text-slate-400 hover:text-white'
                 }`}
               >
-                <Layers className="w-4 h-4" />
+                <Layers className="w-3.5 h-3.5" />
                 <span>Blueprints</span>
               </button>
             </div>
@@ -649,7 +904,7 @@ export const CaseBattlesGame: React.FC<{ onBack: () => void }> = ({ onBack }) =>
                           key={i}
                           className="w-14 h-14 rounded-xl bg-[#070c14] border border-[#1b283d] p-1 flex items-center justify-center shadow-md relative group"
                         >
-                          <img src={c.image} alt={c.name} className="w-full h-full object-contain" />
+                          <img src={c?.image || '/assets/cases.png'} alt={c?.name || 'Case'} className="w-full h-full object-contain" />
                         </div>
                       ))}
                     </div>
@@ -657,7 +912,7 @@ export const CaseBattlesGame: React.FC<{ onBack: () => void }> = ({ onBack }) =>
                     <div className="min-w-0">
                       <div className="flex items-center gap-2">
                         <span className="text-xs font-black text-white truncate">
-                          {battle.cases.length} Rounds ({battle.cases[0]?.name})
+                          {battle.cases.length} Rounds ({battle.cases[0]?.name || 'Mystery Case'})
                         </span>
                         {battle.crazyMode && (
                           <span className="text-[9px] font-black uppercase bg-purple-500/20 text-purple-400 border border-purple-500/30 px-2 py-0.5 rounded">
@@ -695,9 +950,20 @@ export const CaseBattlesGame: React.FC<{ onBack: () => void }> = ({ onBack }) =>
                       </div>
                     ))}
 
-                    {/* Empty Slots */}
+                    {/* Empty Slots (Safely guarded against negative lengths) */}
                     {battle.status === 'open' &&
-                      Array.from({ length: 2 - battle.players.length }).map((_, i) => (
+                      Array.from({
+                        length: Math.max(
+                          0,
+                          (battle.playerConfig === '1v1'
+                            ? 2
+                            : battle.playerConfig === '1v1v1'
+                            ? 3
+                            : battle.playerConfig === '1v1v1v1'
+                            ? 4
+                            : 2) - battle.players.length
+                        ),
+                      }).map((_, i) => (
                         <div
                           key={i}
                           className="flex items-center gap-2 px-3 py-1.5 rounded-xl bg-[#070c14]/50 border border-dashed border-[#1f2d42] text-slate-500 text-xs font-bold"
@@ -720,14 +986,24 @@ export const CaseBattlesGame: React.FC<{ onBack: () => void }> = ({ onBack }) =>
                     )}
 
                     {battle.status === 'open' && userInBattle && (
-                      <button
-                        onClick={() => handleCancelBattle(battle)}
-                        className="flex items-center gap-1.5 px-3.5 py-2.5 rounded-xl bg-red-500/15 hover:bg-red-500/25 border border-red-500/30 text-red-300 text-xs font-black uppercase transition cursor-pointer"
-                        title="Cancel battle and refund your bet"
-                      >
-                        <X className="w-3.5 h-3.5" />
-                        <span>Cancel Battle</span>
-                      </button>
+                      <div className="flex items-center gap-2">
+                        <button
+                          onClick={() => handleCallBotsAndStart(battle)}
+                          className="flex items-center gap-1.5 px-3.5 py-2.5 rounded-xl bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white text-xs font-black uppercase transition cursor-pointer shadow-md shadow-emerald-600/30"
+                          title="Fill empty slots with bots and start battle immediately"
+                        >
+                          <Bot className="w-3.5 h-3.5" />
+                          <span>Call Bots & Play</span>
+                        </button>
+                        <button
+                          onClick={() => handleCancelBattle(battle)}
+                          className="flex items-center gap-1.5 px-3.5 py-2.5 rounded-xl bg-red-500/15 hover:bg-red-500/25 border border-red-500/30 text-red-300 text-xs font-black uppercase transition cursor-pointer"
+                          title="Cancel battle and refund your bet"
+                        >
+                          <X className="w-3.5 h-3.5" />
+                          <span>Cancel</span>
+                        </button>
+                      </div>
                     )}
 
                     {battle.status === 'in-progress' && (

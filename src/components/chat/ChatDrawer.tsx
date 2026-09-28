@@ -19,11 +19,20 @@ export const ChatDrawer: React.FC<{ isOpen: boolean; onClose: () => void }> = ({
     chatBottomRef.current?.scrollIntoView({ behavior: 'smooth' });
   };
 
+  // Display only real player chat - no system tips, crash, or bot server messages
+  const filteredMessages = chatMessages.filter(
+    (m) =>
+      !m.isSystem &&
+      !m.text.startsWith('💸') &&
+      !m.text.toLowerCase().includes('tipped') &&
+      !m.text.toLowerCase().includes('crash')
+  );
+
   useEffect(() => {
     if (isOpen) {
       scrollToBottom();
     }
-  }, [isOpen, chatMessages]);
+  }, [isOpen, filteredMessages]);
 
   const handleSend = () => {
     if (!inputVal.trim()) return;
@@ -41,7 +50,7 @@ export const ChatDrawer: React.FC<{ isOpen: boolean; onClose: () => void }> = ({
           <div className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
           <h3 className="text-xs font-extrabold text-white">Supreme Live Chat</h3>
           <span className="text-[9px] bg-emerald-500/15 text-emerald-400 border border-emerald-500/30 px-1.5 py-0.5 rounded font-black uppercase">
-            Real
+            Players
           </span>
         </div>
         <button
@@ -54,14 +63,14 @@ export const ChatDrawer: React.FC<{ isOpen: boolean; onClose: () => void }> = ({
 
       {/* Messages */}
       <div className="flex-1 p-3.5 overflow-y-auto flex flex-col gap-3">
-        {chatMessages.length === 0 ? (
+        {filteredMessages.length === 0 ? (
           <div className="my-auto flex flex-col items-center justify-center text-center p-4 gap-2 text-slate-500">
             <MessageSquare className="w-8 h-8 text-slate-600" />
             <span className="text-xs font-semibold">No messages yet</span>
-            <p className="text-[11px] text-slate-600">Be the first to start the conversation!</p>
+            <p className="text-[11px] text-slate-600">Be the first to say hello!</p>
           </div>
         ) : (
-          chatMessages.map((m) => (
+          filteredMessages.map((m) => (
             <div
               key={m.id}
               className={`p-2.5 rounded-xl border text-xs leading-relaxed ${

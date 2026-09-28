@@ -2,11 +2,15 @@ import React, { createContext, useContext, useState, useEffect, useRef } from 'r
 import type { Currency, UserState, LiveBet } from '../types';
 import { sound } from '../utils/audio';
 
-interface StoredAccount {
+export interface StoredAccount {
   username: string;
   password: string;
   growId?: string;
   balanceDls: number;
+  linkCode?: string;
+  isBanned?: boolean;
+  isMuted?: boolean;
+  isAdmin?: boolean;
 }
 
 export interface CrashRoomPlayer {
@@ -65,6 +69,17 @@ interface GameContextType {
   currencyIcon: string;
   isAdmin: boolean;
 
+  // Admin & GTPS Panel
+  adminModalOpen: boolean;
+  setAdminModalOpen: (open: boolean) => void;
+  gtpsPort: number;
+  setGtpsPort: (port: number) => void;
+  accounts: StoredAccount[];
+  adminAddBalance: (username: string, amountDls: number) => boolean;
+  adminRemoveBalance: (username: string, amountDls: number) => boolean;
+  adminToggleBan: (username: string) => boolean;
+  adminToggleMute: (username: string) => boolean;
+
   // Floating Balance Gain Animation (+10.00 DLS)
   balanceGainAnim: { id: number; amount: string; icon: string; currency: string } | null;
   triggerBalanceGain: (dlsAmount: number) => void;
@@ -112,8 +127,8 @@ interface GameContextType {
   setActiveGame: (game: string | null) => void;
   walletModalOpen: boolean;
   setWalletModalOpen: (open: boolean) => void;
-  walletTab: 'deposit' | 'withdraw' | 'tip';
-  setWalletTab: (tab: 'deposit' | 'withdraw' | 'tip') => void;
+  walletTab: 'deposit' | 'withdraw' | 'link' | 'tip';
+  setWalletTab: (tab: 'deposit' | 'withdraw' | 'link' | 'tip') => void;
   sidebarOpen: boolean;
   setSidebarOpen: (open: boolean) => void;
   soundMuted: boolean;
@@ -143,17 +158,16 @@ const GameContext = createContext<GameContextType | undefined>(undefined);
 
 export const GameProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [accounts, setAccounts] = useState<StoredAccount[]>(() => {
-    const defaultAccounts = [
-      { username: 'admin99', password: 'admin001', growId: 'admin99', balanceDls: 50000 },
-      { username: 'Mytegt', password: 'password', growId: 'Mytegt', balanceDls: 500 },
+    const defaultAccounts: StoredAccount[] = [
+      { username: 'admin99', password: 'admin001', growId: 'admin99', balanceDls: 50000, isAdmin: true, linkCode: '999999' },
+      { username: 'Mytegt', password: 'password', growId: 'Mytegt', balanceDls: 0, linkCode: '123456' },
     ];
-    const saved = localStorage.getItem('voidps_registered_accounts');
+    const saved = localStorage.getItem('supreme_registered_accounts') || localStorage.getItem('voidps_registered_accounts');
     if (saved) {
       try {
         const parsed: StoredAccount[] = JSON.parse(saved);
         if (!parsed.some((a) => a.username.toLowerCase() === 'admin99')) {
-          parsed.unshift({ username: 'admin99', password: 'admin001', growId: 'admin99', balanceDls: 50000 });
-          localStorage.setItem('voidps_registered_accounts', JSON.stringify(parsed));
+          parsed.unshift({ username: 'admin99', password: 'admin001', growId: 'admin99', balanceDls: 50000, isAdmin: true, linkCode: '999999' });
         }
         return parsed;
       } catch {}
@@ -162,7 +176,7 @@ export const GameProvider: React.FC<{ children: React.ReactNode }> = ({ children
   });
 
   const [currentUser, setCurrentUser] = useState<StoredAccount | null>(() => {
-    const savedSession = localStorage.getItem('voidps_active_session');
+    const savedSession = localStorage.getItem('supreme_active_session') || localStorage.getItem('voidps_active_session');
     if (savedSession) {
       try {
         return JSON.parse(savedSession);
@@ -170,6 +184,18 @@ export const GameProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
     return null;
   });
+
+  const [gtpsPort, setGtpsPortState] = useState<number>(() => {
+    const saved = localStorage.getItem('supreme_gtps_port');
+    return saved ? parseInt(saved, 10) || 21184 : 21184;
+  });
+
+  const setGtpsPort = (port: number) => {
+    setGtpsPortState(port);
+    localStorage.setItem('supreme_gtps_port', port.toString());
+  };
+
+  const [adminModalOpen, setAdminModalOpen] = useState(false);
 
   const [activeCurrency, setActiveCurrencyState] = useState<Currency>(() => {
     const saved = localStorage.getItem('voidps_active_currency');
@@ -185,7 +211,7 @@ export const GameProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [authModalOpen, setAuthModalOpen] = useState(false);
   const [authMode, setAuthMode] = useState<'login' | 'register'>('login');
   const [walletModalOpen, setWalletModalOpen] = useState(false);
-  const [walletTab, setWalletTab] = useState<'deposit' | 'withdraw' | 'tip'>('deposit');
+  const [walletTab, setWalletTab] = useState<'deposit' | 'withdraw' | 'link' | 'tip'>('deposit');
   const [sidebarOpen, setSidebarOpen] = useState(true);
   const [soundMuted, setSoundMuted] = useState(false);
   const [activeGame, setActiveGame] = useState<string | null>(null);
@@ -284,15 +310,23 @@ export const GameProvider: React.FC<{ children: React.ReactNode }> = ({ children
     const rounded = Number(Math.max(0, newBalanceDls).toFixed(2));
     const updated: StoredAccount = { ...currentUser, balanceDls: rounded };
     setCurrentUser(updated);
-    localStorage.setItem('voidps_active_session', JSON.stringify(updated));
+    try {
+      localStorage.setItem('supreme_active_session', JSON.stringify(updated));
+      localStorage.setItem('voidps_active_session', JSON.stringify(updated));
+    } catch {}
 
-    setAccounts((prev) =>
-      prev.map((acc) =>
+    setAccounts((prev) => {
+      const updatedList = prev.map((acc) =>
         acc.username.toLowerCase() === currentUser.username.toLowerCase()
           ? { ...acc, balanceDls: rounded }
           : acc
-      )
-    );
+      );
+      try {
+        localStorage.setItem('supreme_registered_accounts', JSON.stringify(updatedList));
+        localStorage.setItem('voidps_registered_accounts', JSON.stringify(updatedList));
+      } catch {}
+      return updatedList;
+    });
   };
 
   const toActiveAmount = (dls: number): number => {
@@ -322,10 +356,12 @@ export const GameProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   const currencyLabel = activeCurrency === 'BGLS' ? 'BGL' : 'DLS';
   const currencyIcon = activeCurrency === 'BGLS' ? '/assets/BGLS.png' : '/assets/DLS.png';
+  const isAdmin = currentUser?.username.toLowerCase() === 'admin99' || Boolean(currentUser?.isAdmin);
 
   const user: UserState = {
     username: currentUser ? currentUser.username : 'Guest',
     growId: currentUser?.growId,
+    linkCode: currentUser?.linkCode,
     isAuthenticated: currentUser !== null,
     balanceDls,
     activeCurrency,
@@ -342,8 +378,15 @@ export const GameProvider: React.FC<{ children: React.ReactNode }> = ({ children
     if (existing.password !== pass) {
       return { success: false, message: 'Incorrect password.' };
     }
+    if (existing.isBanned) {
+      return { success: false, message: 'This account has been banned by an administrator.' };
+    }
 
     setCurrentUser(existing);
+    try {
+      localStorage.setItem('supreme_active_session', JSON.stringify(existing));
+      localStorage.setItem('voidps_active_session', JSON.stringify(existing));
+    } catch {}
     return { success: true, message: 'Logged in successfully.' };
   };
 
@@ -365,16 +408,127 @@ export const GameProvider: React.FC<{ children: React.ReactNode }> = ({ children
       username: cleanUname,
       password: pass,
       growId: gId?.trim() || cleanUname,
-      balanceDls: 500,
+      balanceDls: 0, // No free 500 DLS - users deposit & link account
+      linkCode: Math.floor(100000 + Math.random() * 900000).toString(),
+      isBanned: false,
+      isMuted: false,
+      isAdmin: cleanUname.toLowerCase() === 'admin99',
     };
 
-    setAccounts((prev) => [...prev, newAcc]);
+    setAccounts((prev) => {
+      const updated = [...prev, newAcc];
+      try {
+        localStorage.setItem('supreme_registered_accounts', JSON.stringify(updated));
+        localStorage.setItem('voidps_registered_accounts', JSON.stringify(updated));
+      } catch {}
+      return updated;
+    });
+
     setCurrentUser(newAcc);
-    return { success: true, message: 'Account registered! 500 DLS welcome bonus credited.' };
+    try {
+      localStorage.setItem('supreme_active_session', JSON.stringify(newAcc));
+      localStorage.setItem('voidps_active_session', JSON.stringify(newAcc));
+    } catch {}
+    return { success: true, message: 'Account registered successfully! Please deposit or link your GTPS account.' };
   };
 
   const logout = () => {
     setCurrentUser(null);
+    try {
+      localStorage.removeItem('supreme_active_session');
+      localStorage.removeItem('voidps_active_session');
+    } catch {}
+  };
+
+  // Admin Controls
+  const adminAddBalance = (username: string, amountDls: number): boolean => {
+    setAccounts((prev) => {
+      const updated = prev.map((a) => {
+        if (a.username.toLowerCase() === username.toLowerCase()) {
+          const newBal = Number(((a.balanceDls || 0) + amountDls).toFixed(2));
+          return { ...a, balanceDls: newBal };
+        }
+        return a;
+      });
+      try {
+        localStorage.setItem('supreme_registered_accounts', JSON.stringify(updated));
+      } catch {}
+      return updated;
+    });
+
+    if (currentUser && currentUser.username.toLowerCase() === username.toLowerCase()) {
+      const newBal = Number(((currentUser.balanceDls || 0) + amountDls).toFixed(2));
+      const updatedSession = { ...currentUser, balanceDls: newBal };
+      setCurrentUser(updatedSession);
+      try {
+        localStorage.setItem('supreme_active_session', JSON.stringify(updatedSession));
+      } catch {}
+      triggerBalanceGain(amountDls);
+    }
+    return true;
+  };
+
+  const adminRemoveBalance = (username: string, amountDls: number): boolean => {
+    setAccounts((prev) => {
+      const updated = prev.map((a) => {
+        if (a.username.toLowerCase() === username.toLowerCase()) {
+          const newBal = Number(Math.max(0, (a.balanceDls || 0) - amountDls).toFixed(2));
+          return { ...a, balanceDls: newBal };
+        }
+        return a;
+      });
+      try {
+        localStorage.setItem('supreme_registered_accounts', JSON.stringify(updated));
+      } catch {}
+      return updated;
+    });
+
+    if (currentUser && currentUser.username.toLowerCase() === username.toLowerCase()) {
+      const newBal = Number(Math.max(0, (currentUser.balanceDls || 0) - amountDls).toFixed(2));
+      const updatedSession = { ...currentUser, balanceDls: newBal };
+      setCurrentUser(updatedSession);
+      try {
+        localStorage.setItem('supreme_active_session', JSON.stringify(updatedSession));
+      } catch {}
+    }
+    return true;
+  };
+
+  const adminToggleBan = (username: string): boolean => {
+    setAccounts((prev) => {
+      const updated = prev.map((a) => {
+        if (a.username.toLowerCase() === username.toLowerCase()) {
+          return { ...a, isBanned: !a.isBanned };
+        }
+        return a;
+      });
+      try {
+        localStorage.setItem('supreme_registered_accounts', JSON.stringify(updated));
+      } catch {}
+      return updated;
+    });
+
+    if (currentUser && currentUser.username.toLowerCase() === username.toLowerCase()) {
+      logout();
+      showToast('Your account was banned by an administrator.', 'error', 'Account Banned');
+    }
+    return true;
+  };
+
+  const adminToggleMute = (username: string): boolean => {
+    setAccounts((prev) => {
+      const updated = prev.map((a) => {
+        if (a.username.toLowerCase() === username.toLowerCase()) {
+          return { ...a, isMuted: !a.isMuted };
+        }
+        return a;
+      });
+      try {
+        localStorage.setItem('supreme_registered_accounts', JSON.stringify(updated));
+      } catch {}
+      return updated;
+    });
+    return true;
   };
 
   // Corner Toast Notifications state
@@ -584,7 +738,6 @@ export const GameProvider: React.FC<{ children: React.ReactNode }> = ({ children
     sound.playCashout();
 
     const formattedAmount = `${toActiveAmount(dlsAmount)} ${currencyLabel}`;
-    sendChatMessage(`💸 [TIP] ${user.username} tipped ${formattedAmount} to ${targetUser.trim()}! ${message ? `("${message}")` : ''}`);
 
     const resMsg = `Tipped ${formattedAmount} to ${targetUser.trim()}! ${message ? `("${message}")` : ''}`;
     showToast(resMsg, 'success', 'Tip Sent');
@@ -604,18 +757,10 @@ export const GameProvider: React.FC<{ children: React.ReactNode }> = ({ children
     if (saved) {
       try {
         const parsed = JSON.parse(saved);
-        if (Array.isArray(parsed) && parsed.length > 0) return parsed;
+        if (Array.isArray(parsed)) return parsed.filter((m: ChatMessage) => !m.isSystem && !m.text.startsWith('💸 [TIP]'));
       } catch {}
     }
-    return [
-      {
-        id: 'system_welcome',
-        user: 'Server Supreme',
-        text: 'Welcome to Supreme Casino! Live server & chat are online. 100% real player games.',
-        time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
-        isSystem: true,
-      },
-    ];
+    return [];
   });
 
   // Real-time synchronization across browser tabs and WebSocket server
@@ -702,6 +847,10 @@ export const GameProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   const sendChatMessage = (text: string) => {
     if (!text.trim()) return;
+    if (currentUser?.isMuted) {
+      showToast('You are currently muted from chat by an administrator.', 'error', 'Chat Muted');
+      return;
+    }
     const newMsg: ChatMessage = {
       id: Date.now().toString() + '_' + Math.random().toString(36).substring(2, 6),
       user: user.isAuthenticated ? user.username : 'Guest_' + Math.floor(Math.random() * 899 + 100),
@@ -723,6 +872,27 @@ export const GameProvider: React.FC<{ children: React.ReactNode }> = ({ children
       }
     } catch {}
   };
+
+  // Case Battles Auto-Recovery on Reload (Guarantees user won't lose winnings on refresh/disconnect)
+  useEffect(() => {
+    try {
+      const pendingStr = localStorage.getItem('supreme_active_battle_pending');
+      if (pendingStr) {
+        const battle = JSON.parse(pendingStr);
+        if (battle && battle.precomputedWinnerId && !battle.payoutAwarded) {
+          if (battle.precomputedWinnerIsUser) {
+            const wonAmount = Number(battle.precomputedLootTotal || 0);
+            if (wonAmount > 0) {
+              awardPayout(wonAmount, 'Restored Case Battle Victory', 1, 0);
+              showToast(`🏆 Restored Case Battle Victory: Awarded ${wonAmount} DLS from your battle!`, 'success', 'Battle Restored');
+            }
+          }
+          battle.payoutAwarded = true;
+          localStorage.setItem('supreme_active_battle_pending', JSON.stringify(battle));
+        }
+      }
+    } catch {}
+  }, []);
 
   // ==========================================
   // 🚀 24/7 GLOBAL SYNCHRONIZED CRASH ROOM ENGINE
@@ -883,7 +1053,16 @@ export const GameProvider: React.FC<{ children: React.ReactNode }> = ({ children
         fromActiveAmount,
         currencyLabel,
         currencyIcon,
-        isAdmin: Boolean(currentUser && currentUser.username.toLowerCase() === 'admin99'),
+        isAdmin,
+        adminModalOpen,
+        setAdminModalOpen,
+        gtpsPort,
+        setGtpsPort,
+        accounts,
+        adminAddBalance,
+        adminRemoveBalance,
+        adminToggleBan,
+        adminToggleMute,
         balanceGainAnim,
         triggerBalanceGain,
         toast,

@@ -70,9 +70,9 @@ export const AuthModal: React.FC<{ isOpen: boolean; onClose: () => void; initial
             </div>
             <div>
               <h3 className="text-sm font-extrabold text-white tracking-wide">
-                {mode === 'login' ? 'Sign In to Void-Ps' : 'Create Void-Ps Account'}
+                {mode === 'login' ? 'Sign In to Supreme Casino' : 'Create Supreme Account'}
               </h3>
-              <span className="text-[10px] text-slate-400">Authentic In-Game Casino & Cashier</span>
+              <span className="text-[10px] text-slate-400">GTPS In-Game Cashier & Player Sync</span>
             </div>
           </div>
           <button
@@ -118,20 +118,20 @@ export const AuthModal: React.FC<{ isOpen: boolean; onClose: () => void; initial
           </button>
         </div>
 
-        {/* Welcome Bonus Notice for Register */}
+        {/* In-Game GTPS Notice for Register */}
         {mode === 'register' && (
-          <div className="mx-6 mt-4 p-3 rounded-xl bg-gradient-to-r from-[#0074e4]/15 to-emerald-500/15 border border-[#0074e4]/30 flex items-center justify-between">
+          <div className="mx-6 mt-4 p-3 rounded-xl bg-gradient-to-r from-[#0074e4]/15 to-cyan-500/15 border border-[#0074e4]/30 flex items-center justify-between">
             <div className="flex items-center gap-2.5">
               <div className="w-8 h-8 rounded-lg bg-[#142640] border border-[#234273] flex items-center justify-center p-1">
                 <img src="/assets/BGLS.png" alt="BGLS" className="w-5 h-5 object-contain" />
               </div>
               <div>
-                <span className="text-xs font-black text-white block">Welcome Bonus</span>
-                <span className="text-[11px] text-emerald-400 font-bold">500 DLS (5.00 BGLS) Free</span>
+                <span className="text-xs font-black text-white block">GTPS In-Game Cashier</span>
+                <span className="text-[11px] text-cyan-300 font-bold">Port 21184 · Deposit & Withdraw In-Game</span>
               </div>
             </div>
-            <span className="text-[10px] uppercase font-black px-2 py-0.5 rounded bg-emerald-500/20 text-emerald-300 border border-emerald-500/30">
-              Instant
+            <span className="text-[10px] uppercase font-black px-2 py-0.5 rounded bg-cyan-500/20 text-cyan-300 border border-cyan-500/30">
+              Synced
             </span>
           </div>
         )}

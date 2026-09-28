@@ -3,9 +3,8 @@ export type Currency = 'DLS' | 'BGLS';
 export interface UserState {
   username: string;
   growId?: string;
+  linkCode?: string;
   isAuthenticated: boolean;
-  // Stored internally in DLS (100 DLS = 1 BGL)
-  // Welcome bonus is 500 DLS (= 5 BGL)
   balanceDls: number;
   activeCurrency: Currency;
   selectedFiat: 'USD' | 'EUR';

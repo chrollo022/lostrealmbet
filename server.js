@@ -28,19 +28,78 @@ app.get('/healthz', (req, res) => {
 const distPath = path.join(__dirname, 'dist');
 app.use(express.static(distPath));
 
-// In-memory real-time state for live chat & bets
+// In-memory real-time state for live chat & bets & GTPS
 const MAX_HISTORY = 100;
-const liveChatHistory = [
-  {
-    id: 'system_welcome',
-    user: 'Server Supreme',
-    text: 'Welcome to Supreme Casino! Live server is online on Render.',
-    time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
-    isSystem: true,
-  },
-];
+const liveChatHistory = [];
 const liveBetsHistory = [];
 const activeBattles = [];
+
+let gtpsConfig = {
+  port: 21184,
+  secretKey: 'supreme_gtps_secret_auth_token_21184',
+  status: 'online',
+  activeSyncCount: 0,
+};
+
+// GTPS API Endpoints (Synced with GTPS Server on Port 21184)
+app.get('/api/gtps/status', (req, res) => {
+  res.json({
+    status: gtpsConfig.status,
+    port: gtpsConfig.port,
+    syncCount: gtpsConfig.activeSyncCount,
+  });
+});
+
+app.post('/api/gtps/config', (req, res) => {
+  const { port } = req.body;
+  if (port && Number(port) > 0) {
+    gtpsConfig.port = Number(port);
+  }
+  res.json({ success: true, port: gtpsConfig.port });
+});
+
+app.post('/api/gtps/deposit-webhook', (req, res) => {
+  const { growId, currency, amount, secretKey } = req.body;
+  console.log(`[GTPS Deposit] Received ${amount} ${currency} from ${growId}`);
+  gtpsConfig.activeSyncCount++;
+
+  // Broadcast deposit notification to all connected clients
+  broadcast({
+    type: 'GTPS_DEPOSIT',
+    payload: {
+      growId: growId || 'Unknown',
+      currency: currency || 'BGL',
+      amount: Number(amount) || 0,
+      timestamp: Date.now(),
+    },
+  });
+
+  res.json({ success: true, growId, currency, amount });
+});
+
+app.post('/api/gtps/withdraw-webhook', (req, res) => {
+  const { growId, currency, amount, secretKey } = req.body;
+  console.log(`[GTPS Withdraw] Requested ${amount} ${currency} for ${growId}`);
+  gtpsConfig.activeSyncCount++;
+
+  res.json({ success: true, growId, currency, amount, status: 'dispatched' });
+});
+
+app.post('/api/gtps/link-growid', (req, res) => {
+  const { growid, code } = req.body;
+  console.log(`[GTPS Link] GrowID ${growid} linked with code ${code}`);
+
+  broadcast({
+    type: 'GTPS_LINK',
+    payload: { growId: growid, code, timestamp: Date.now() },
+  });
+
+  res.json({ success: true, growId: growid, code });
+});
+
+app.get('/api/gtps/balance/:growid', (req, res) => {
+  res.json({ success: true, growId: req.params.growid, status: 'active' });
+});
 
 // Real-Time WebSocket Server
 const wss = new WebSocketServer({ server, path: '/ws' });

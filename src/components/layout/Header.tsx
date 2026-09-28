@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { Menu, ChevronDown, Wallet, MessageSquare, Volume2, VolumeX, Settings, User, LogOut } from 'lucide-react';
+import { Menu, ChevronDown, Wallet, MessageSquare, Volume2, VolumeX, Settings, User, LogOut, Shield } from 'lucide-react';
 import { useGame } from '../../context/GameContext';
 import { sound } from '../../utils/audio';
 
@@ -29,6 +29,8 @@ export const Header: React.FC<HeaderProps> = ({ onToggleChat, chatOpen }) => {
     setAuthMode,
     balanceGainAnim,
     showToast,
+    isAdmin,
+    setAdminModalOpen,
   } = useGame();
 
   const [dropdownOpen, setDropdownOpen] = useState(false);
@@ -255,42 +257,74 @@ export const Header: React.FC<HeaderProps> = ({ onToggleChat, chatOpen }) => {
             </button>
           </div>
         ) : (
-          /* User Profile Dropdown when logged in */
-          <div className="relative" ref={userDropdownRef}>
-            <button
-              onClick={() => {
-                sound.playClick();
-                setUserDropdownOpen(!userDropdownOpen);
-              }}
-              className="flex items-center gap-2 bg-[#131b28] hover:bg-[#182335] border border-[#1e2a3e] px-2.5 py-1.5 rounded-xl transition"
-            >
-              <div className="w-7 h-7 rounded-lg bg-[#0074e4]/20 border border-[#0074e4]/40 flex items-center justify-center text-[#38bdf8]">
-                <User className="w-4 h-4" />
-              </div>
-              <span className="text-xs font-bold text-white hidden sm:inline">{user.username}</span>
-              <ChevronDown className="w-3.5 h-3.5 text-slate-400" />
-            </button>
-
-            {userDropdownOpen && (
-              <div className="absolute top-12 right-0 w-44 bg-[#0e1420] border border-[#1e2a3e] rounded-xl shadow-2xl p-2 z-50">
-                <div className="px-3 py-2 border-b border-[#1a2538] mb-1">
-                  <span className="text-xs font-bold text-white block">{user.username}</span>
-                  <span className="text-[10px] text-slate-400 font-mono">{formatBalance()} {currencyLabel}</span>
-                </div>
-                <button
-                  onClick={() => {
-                    sound.playClick();
-                    logout();
-                    setUserDropdownOpen(false);
-                  }}
-                  className="w-full flex items-center gap-2 px-3 py-2 rounded-lg text-xs font-bold text-red-400 hover:bg-red-500/10 transition"
-                >
-                  <LogOut className="w-4 h-4" />
-                  <span>Log Out</span>
-                </button>
-              </div>
+          <>
+            {/* Admin Panel Quick Access Button */}
+            {(isAdmin || user.username === 'admin99') && (
+              <button
+                onClick={() => {
+                  sound.playClick();
+                  setAdminModalOpen(true);
+                }}
+                className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-gradient-to-r from-amber-600/30 to-amber-500/20 border border-amber-500/40 text-amber-300 hover:text-amber-200 text-xs font-black uppercase tracking-wider shadow-md shadow-amber-500/10 transition cursor-pointer"
+                title="Open Supreme Admin Panel"
+              >
+                <Shield className="w-3.5 h-3.5 text-amber-400" />
+                <span className="hidden md:inline">Admin Panel</span>
+              </button>
             )}
-          </div>
+
+            {/* User Profile Dropdown when logged in */}
+            <div className="relative" ref={userDropdownRef}>
+              <button
+                onClick={() => {
+                  sound.playClick();
+                  setUserDropdownOpen(!userDropdownOpen);
+                }}
+                className="flex items-center gap-2 bg-[#131b28] hover:bg-[#182335] border border-[#1e2a3e] px-2.5 py-1.5 rounded-xl transition cursor-pointer"
+              >
+                <div className="w-7 h-7 rounded-lg bg-[#0074e4]/20 border border-[#0074e4]/40 flex items-center justify-center text-[#38bdf8]">
+                  <User className="w-4 h-4" />
+                </div>
+                <span className="text-xs font-bold text-white hidden sm:inline">{user.username}</span>
+                <ChevronDown className="w-3.5 h-3.5 text-slate-400" />
+              </button>
+
+              {userDropdownOpen && (
+                <div className="absolute top-12 right-0 w-48 bg-[#0e1420] border border-[#1e2a3e] rounded-xl shadow-2xl p-2 z-50">
+                  <div className="px-3 py-2 border-b border-[#1a2538] mb-1">
+                    <span className="text-xs font-bold text-white block">{user.username}</span>
+                    <span className="text-[10px] text-slate-400 font-mono">{formatBalance()} {currencyLabel}</span>
+                  </div>
+
+                  {(isAdmin || user.username === 'admin99') && (
+                    <button
+                      onClick={() => {
+                        sound.playClick();
+                        setAdminModalOpen(true);
+                        setUserDropdownOpen(false);
+                      }}
+                      className="w-full flex items-center gap-2 px-3 py-2 rounded-lg text-xs font-bold text-amber-400 hover:bg-amber-500/10 transition cursor-pointer mb-1"
+                    >
+                      <Shield className="w-4 h-4" />
+                      <span>Admin Panel</span>
+                    </button>
+                  )}
+
+                  <button
+                    onClick={() => {
+                      sound.playClick();
+                      logout();
+                      setUserDropdownOpen(false);
+                    }}
+                    className="w-full flex items-center gap-2 px-3 py-2 rounded-lg text-xs font-bold text-red-400 hover:bg-red-500/10 transition cursor-pointer"
+                  >
+                    <LogOut className="w-4 h-4" />
+                    <span>Log Out</span>
+                  </button>
+                </div>
+              )}
+            </div>
+          </>
         )}
 
         {/* Chat Toggle Button */}

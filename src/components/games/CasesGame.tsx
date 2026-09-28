@@ -20,6 +20,7 @@ import {
   Palette,
   Calculator,
   Scale,
+  Swords,
 } from 'lucide-react';
 import { useGame } from '../../context/GameContext';
 import { sound } from '../../utils/audio';
@@ -261,6 +262,7 @@ export const CasesGame: React.FC<{ onBack: () => void }> = ({ onBack }) => {
     showToast,
     user,
     isAdmin,
+    setActiveGame,
   } = useGame();
 
   // Persistent custom cases storage (Defaults to empty catalog as requested!)
@@ -715,14 +717,29 @@ export const CasesGame: React.FC<{ onBack: () => void }> = ({ onBack }) => {
         {/* Top Header */}
         <div className="flex flex-wrap items-center justify-between gap-3">
           <div className="flex items-center gap-3">
-            <div className="flex items-center gap-3 px-6 py-3.5 rounded-2xl border bg-[#0f223d] border-[#1e3b68] text-white shadow-xl shadow-[#0074e4]/15">
-              <div className="w-8 h-8 rounded-xl bg-[#142d52] border border-[#214a82] flex items-center justify-center text-amber-400 shrink-0">
-                <Star className="w-4 h-4 fill-amber-400 text-amber-400" />
-              </div>
-              <div>
-                <h3 className="text-sm font-black text-white">Supreme Cases</h3>
-                <p className="text-[11px] text-slate-400">Cases created and managed by Admin</p>
-              </div>
+            <button
+              onClick={onBack}
+              className="flex items-center gap-2 px-3.5 py-2.5 rounded-xl bg-[#0d1420] border border-[#1a2638] text-xs font-bold text-slate-300 hover:text-white hover:border-[#2b3e5c] transition cursor-pointer"
+            >
+              <ChevronLeft className="w-4 h-4" />
+              <span>Back to Games</span>
+            </button>
+
+            {/* Switch between Mystery Cases and Case Battles */}
+            <div className="flex items-center bg-[#070c14] p-1 rounded-2xl border border-[#1b283d]">
+              <button
+                className="flex items-center gap-2 px-4 py-2 rounded-xl font-black text-xs bg-[#0074e4] text-white shadow-lg shadow-[#0074e4]/25 cursor-default"
+              >
+                <Gift className="w-4 h-4 text-purple-300" />
+                <span>Mystery Cases</span>
+              </button>
+              <button
+                onClick={() => setActiveGame('casebattles')}
+                className="flex items-center gap-2 px-4 py-2 rounded-xl font-bold text-xs text-slate-400 hover:text-white transition cursor-pointer"
+              >
+                <Swords className="w-4 h-4 text-amber-400" />
+                <span>Case Battles</span>
+              </button>
             </div>
           </div>
 
