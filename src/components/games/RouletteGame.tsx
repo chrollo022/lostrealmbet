@@ -403,7 +403,7 @@ export const RouletteGame: React.FC<{ onBack: () => void }> = ({ onBack }) => {
   return (
     <GameShell
       title="Roulette"
-      icon="/assets/VoidPs_Originals_roulette.png"
+      icon="/assets/roulette.png"
       badge="97.3% RTP · European"
       onBack={onBack}
       controls={

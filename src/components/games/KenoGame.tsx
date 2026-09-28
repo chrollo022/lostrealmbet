@@ -179,7 +179,7 @@ export const KenoGame: React.FC<{ onBack: () => void }> = ({ onBack }) => {
   return (
     <GameShell
       title="Keno"
-      icon="/assets/VoidPs_Originals_keno.png"
+      icon="/assets/keno.png"
       badge="98% RTP · 40 Numbers"
       onBack={onBack}
       controls={

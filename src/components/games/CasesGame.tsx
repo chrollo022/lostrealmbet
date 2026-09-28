@@ -617,7 +617,7 @@ export const CasesGame: React.FC<{ onBack: () => void }> = ({ onBack }) => {
         color: newCaseColor,
         price: priceNum,
         volatility: newCaseVolatility,
-        creator: 'VoidPs Originals',
+        creator: 'Supreme',
         openedTimes: 0,
         items: finalItems,
       };
@@ -720,7 +720,7 @@ export const CasesGame: React.FC<{ onBack: () => void }> = ({ onBack }) => {
                 <Star className="w-4 h-4 fill-amber-400 text-amber-400" />
               </div>
               <div>
-                <h3 className="text-sm font-black text-white">VoidPs Originals</h3>
+                <h3 className="text-sm font-black text-white">Supreme Cases</h3>
                 <p className="text-[11px] text-slate-400">Cases created and managed by Admin</p>
               </div>
             </div>
@@ -1448,7 +1448,7 @@ export const CasesGame: React.FC<{ onBack: () => void }> = ({ onBack }) => {
               <div className="w-4 h-4 rounded bg-[#38bdf8]/20 flex items-center justify-center text-[10px] text-[#38bdf8]">
                 👑
               </div>
-              <span>{selectedCase.creator || 'VoidPs Originals'}</span>
+              <span>{selectedCase.creator || 'Supreme'}</span>
             </div>
           </div>
 

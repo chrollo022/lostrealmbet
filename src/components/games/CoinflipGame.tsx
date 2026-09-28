@@ -196,7 +196,7 @@ export const CoinflipGame: React.FC<{ onBack: () => void }> = ({ onBack }) => {
   return (
     <GameShell
       title="Coin Flip"
-      icon="/assets/VoidPs_Originals_coinflip.png"
+      icon="/assets/coinflip.png"
       badge="1.92× Base"
       onBack={onBack}
       controls={

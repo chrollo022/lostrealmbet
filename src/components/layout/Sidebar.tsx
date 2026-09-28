@@ -51,11 +51,11 @@ export const Sidebar: React.FC<SidebarProps> = ({ onSelectGame }) => {
           />
         </div>
 
-        {/* Supreme Originals Navigation */}
+        {/* Supreme Games Navigation */}
         <div className="flex flex-col gap-1">
           <div className="flex items-center justify-between px-3 py-1">
             <span className="text-[11px] font-bold uppercase tracking-wider text-slate-400">
-              Supreme Originals
+              Supreme Games
             </span>
             <span className="text-[10px] font-mono font-bold text-emerald-400 bg-emerald-500/10 px-1.5 py-0.5 rounded border border-emerald-500/20">
               Live
@@ -71,7 +71,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ onSelectGame }) => {
             }`}
           >
             <Gamepad2 className="w-4 h-4 text-[#38bdf8]" />
-            <span>All Originals</span>
+            <span>All Games</span>
           </button>
 
           {/* List of all games */}
@@ -95,7 +95,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ onSelectGame }) => {
                   </div>
 
                   <span className="text-[9px] font-mono font-bold text-slate-400 bg-white/5 px-1.5 py-0.5 rounded border border-white/10 opacity-70 group-hover:opacity-100 transition">
-                    {game.badge || 'ORIGINAL'}
+                    {game.badge || 'HOT'}
                   </span>
                 </button>
               );

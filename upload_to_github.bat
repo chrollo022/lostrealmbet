@@ -14,15 +14,19 @@ if "%REPO_URL%"=="" (
 )
 
 echo.
-echo [1/3] Setting up Git branches...
+echo [1/4] Staging and committing all changes...
+git add -A
+git commit -m "Update Supreme Casino files and assets" >nul 2>&1
+
+echo [2/4] Setting up Git branches...
 git branch -M main
 
-echo [2/3] Connecting to your repository: %REPO_URL%
+echo [3/4] Connecting to your repository: %REPO_URL%
 git remote remove origin >nul 2>&1
 git remote add origin %REPO_URL%
 
-echo [3/3] Uploading all files to GitHub...
-echo (A browser window will pop up - please click "Sign in with your browser" to authorize your crowicgts account)
+echo [4/4] Uploading all files to GitHub...
+echo (A browser window will pop up if needed - please authorize your account)
 git push -u origin main --force
 
 if %errorlevel% neq 0 (

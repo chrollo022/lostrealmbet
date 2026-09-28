@@ -104,7 +104,7 @@ export const GameCard: React.FC<GameCardProps> = ({ game, onPlay }) => {
             {game.title}
           </h4>
           <span className="text-[9px] text-slate-400 font-semibold block truncate">
-            Void-Ps Originals
+            Supreme Games
           </span>
         </div>
         <span className="shrink-0 text-[9px] font-mono font-bold text-emerald-400 bg-emerald-500/10 px-1.5 py-0.5 rounded border border-emerald-500/20">

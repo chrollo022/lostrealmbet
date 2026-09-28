@@ -328,7 +328,7 @@ export const BlackjackGame: React.FC<{ onBack: () => void }> = ({ onBack }) => {
   return (
     <GameShell
       title="Blackjack"
-      icon="/assets/VoidPs_Originals_blackjack.png"
+      icon="/assets/blackjack.png"
       badge="99.5% RTP · Pays 3:2"
       onBack={onBack}
       controls={

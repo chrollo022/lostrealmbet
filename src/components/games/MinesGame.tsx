@@ -225,7 +225,7 @@ export const MinesGame: React.FC<{ onBack: () => void }> = ({ onBack }) => {
             <ArrowLeft className="w-4 h-4" />
           </button>
           <div className="flex items-center gap-2">
-            <img src="/assets/VoidPs_Originals_mines.png" alt="Mines" className="w-7 h-7 rounded-lg object-cover" />
+            <img src="/assets/mines.png" alt="Mines" className="w-7 h-7 rounded-lg object-cover" />
             <h2 className="text-base font-black text-white tracking-wide">MINES</h2>
             <span className="text-[10px] font-bold text-emerald-400 bg-emerald-950/60 px-2 py-0.5 rounded border border-emerald-500/30">
               99% RTP

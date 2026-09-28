@@ -169,7 +169,7 @@ export const CrashGame: React.FC<{ onBack: () => void }> = ({ onBack }) => {
   return (
     <GameShell
       title="Crash"
-      icon="/assets/VoidPs_Originals_crash.png"
+      icon="/assets/crash.png"
       badge="24/7 MULTIPLAYER ROOM · 99% RTP"
       onBack={onBack}
       controls={

@@ -180,7 +180,7 @@ export const TowersGame: React.FC<{ onBack: () => void }> = ({ onBack }) => {
   return (
     <GameShell
       title="Towers"
-      icon="/assets/VoidPs_Originals_towers.png"
+      icon="/assets/towers.png"
       badge="98% RTP"
       onBack={onBack}
       controls={

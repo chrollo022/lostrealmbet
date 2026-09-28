@@ -77,7 +77,7 @@ export const Header: React.FC<HeaderProps> = ({ onToggleChat, chatOpen }) => {
           className="flex items-center gap-2.5 cursor-pointer select-none group transition-transform hover:scale-105 active:scale-95"
         >
           <img
-            src="/assets/void_logo.png"
+            src="/assets/logo.png"
             alt="Supreme Server"
             className="h-8 sm:h-9 w-auto object-contain filter drop-shadow-[0_2px_8px_rgba(0,116,228,0.4)]"
           />

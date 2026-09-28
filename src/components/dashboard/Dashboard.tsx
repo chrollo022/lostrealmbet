@@ -196,7 +196,7 @@ export const Dashboard: React.FC<DashboardProps> = ({ onSelectGame }) => {
           <div className="flex items-center gap-2">
             <Flame className="w-5 h-5 text-amber-400" />
             <h3 className="text-base sm:text-lg font-black text-white tracking-wide">
-              Void-Ps Game Library ({filteredGames.length} Games)
+              Supreme Game Library ({filteredGames.length} Games)
             </h3>
           </div>
           <span className="text-xs font-mono text-slate-400">
