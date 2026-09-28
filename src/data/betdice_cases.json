@@ -1,0 +1,608 @@
+[
+  {
+    "name": "Tiny Collection",
+    "image": "/assets/cases/tiny_collection.png",
+    "volatility": "High",
+    "price": 2
+  },
+  {
+    "name": "Radiant Collection",
+    "image": "/assets/cases/radiant_collection.png",
+    "volatility": "Medium",
+    "price": 140.84
+  },
+  {
+    "name": "Parasol Paradise",
+    "image": "/assets/cases/parasol_paradise.png",
+    "volatility": "High",
+    "price": 4.13
+  },
+  {
+    "name": "Bone Yard",
+    "image": "/assets/cases/bone_yard.png",
+    "volatility": "Medium",
+    "price": 10.48
+  },
+  {
+    "name": "Mythic Beasts",
+    "image": "/assets/cases/mythic_beasts.png",
+    "volatility": "High",
+    "price": 78.14
+  },
+  {
+    "name": "Rifle Range",
+    "image": "/assets/cases/rifle_range.png",
+    "volatility": "Low",
+    "price": 0.89
+  },
+  {
+    "name": "Tropical Vibes",
+    "image": "/assets/cases/tropical_vibes.png",
+    "volatility": "High",
+    "price": 1.29
+  },
+  {
+    "name": "Burning Collection",
+    "image": "/assets/cases/burning_collection.png",
+    "volatility": "Medium",
+    "price": 2.36
+  },
+  {
+    "name": "Wild West",
+    "image": "/assets/cases/wild_west.png",
+    "volatility": "Medium",
+    "price": 0.58
+  },
+  {
+    "name": "Balloons & Floating",
+    "image": "/assets/cases/balloons__floating.png",
+    "volatility": "Medium",
+    "price": 0.45
+  },
+  {
+    "name": "Uncommon Finds",
+    "image": "/assets/cases/uncommon_finds.png",
+    "volatility": "Low",
+    "price": 6.78
+  },
+  {
+    "name": "Weather Starter",
+    "image": "/assets/cases/weather_starter.png",
+    "volatility": "Low",
+    "price": 0.07
+  },
+  {
+    "name": "Mini Dragons",
+    "image": "/assets/cases/mini_dragons.png",
+    "volatility": "Medium",
+    "price": 1.95
+  },
+  {
+    "name": "Common Collector",
+    "image": "/assets/cases/common_collector.png",
+    "volatility": "Medium",
+    "price": 0.7
+  },
+  {
+    "name": "Basic Weapons",
+    "image": "/assets/cases/basic_weapons.png",
+    "volatility": "Medium",
+    "price": 0.69
+  },
+  {
+    "name": "Color Spectrum",
+    "image": "/assets/cases/color_spectrum.png",
+    "volatility": "Medium",
+    "price": 1.04
+  },
+  {
+    "name": "Galactic Warriors",
+    "image": "/assets/cases/galactic_warriors.png",
+    "volatility": "Medium",
+    "price": 282.3
+  },
+  {
+    "name": "Cheap Rides",
+    "image": "/assets/cases/cheap_rides.png",
+    "volatility": "Medium",
+    "price": 0.34
+  },
+  {
+    "name": "Budget Wings",
+    "image": "/assets/cases/budget_wings.png",
+    "volatility": "Extreme",
+    "price": 7.11
+  },
+  {
+    "name": "Starter Pack",
+    "image": "/assets/cases/starter_pack.png",
+    "volatility": "Medium",
+    "price": 0.66
+  },
+  {
+    "name": "Aztec Gold",
+    "image": "/assets/cases/aztec_gold.png",
+    "volatility": "High",
+    "price": 54.5
+  },
+  {
+    "name": "Blessed Voyage",
+    "image": "/assets/cases/blessed_voyage.png",
+    "volatility": "High",
+    "price": 1129.39
+  },
+  {
+    "name": "Comet Crash",
+    "image": "/assets/cases/comet_crash.png",
+    "volatility": "High",
+    "price": 65.89
+  },
+  {
+    "name": "Nuke Zone",
+    "image": "/assets/cases/nuke_zone.png",
+    "volatility": "Medium",
+    "price": 1.31
+  },
+  {
+    "name": "Tractor Pull",
+    "image": "/assets/cases/tractor_pull.png",
+    "volatility": "High",
+    "price": 3.46
+  },
+  {
+    "name": "Cloud Nine",
+    "image": "/assets/cases/cloud_nine.png",
+    "volatility": "High",
+    "price": 1107.18
+  },
+  {
+    "name": "Shadow Realm",
+    "image": "/assets/cases/shadow_realm.png",
+    "volatility": "Medium",
+    "price": 6.71
+  },
+  {
+    "name": "Titan's Treasure",
+    "image": "/assets/cases/titans_treasure.png",
+    "volatility": "Medium",
+    "price": 36.91
+  },
+  {
+    "name": "Rare Gem Hunt",
+    "image": "/assets/cases/rare_gem_hunt.png",
+    "volatility": "High",
+    "price": 53.67
+  },
+  {
+    "name": "Moonlight Mayhem",
+    "image": "/assets/cases/moonlight_mayhem.png",
+    "volatility": "High",
+    "price": 2.24
+  },
+  {
+    "name": "Lucky Strike",
+    "image": "/assets/cases/lucky_strike.png",
+    "volatility": "High",
+    "price": 306.79
+  },
+  {
+    "name": "Crystal Vault",
+    "image": "/assets/cases/crystal_vault.png",
+    "volatility": "Low",
+    "price": 47.92
+  },
+  {
+    "name": "Warfare Arsenal",
+    "image": "/assets/cases/warfare_arsenal.png",
+    "volatility": "Extreme",
+    "price": 20.92
+  },
+  {
+    "name": "Mystic Portal",
+    "image": "/assets/cases/mystic_portal.png",
+    "volatility": "Medium",
+    "price": 15.15
+  },
+  {
+    "name": "High Roller",
+    "image": "/assets/cases/high_roller.png",
+    "volatility": "High",
+    "price": 1184.39
+  },
+  {
+    "name": "Rainy Day Blues",
+    "image": "/assets/cases/rainy_day_blues.png",
+    "volatility": "High",
+    "price": 3.45
+  },
+  {
+    "name": "Claw Machine",
+    "image": "/assets/cases/claw_machine.png",
+    "volatility": "High",
+    "price": 73.71
+  },
+  {
+    "name": "Beverage Bonanza",
+    "image": "/assets/cases/beverage_bonanza.png",
+    "volatility": "High",
+    "price": 0.64
+  },
+  {
+    "name": "Fisherman's Dream",
+    "image": "/assets/cases/fishermans_dream.png",
+    "volatility": "High",
+    "price": 72.09
+  },
+  {
+    "name": "Apocalypse Now",
+    "image": "/assets/cases/apocalypse_now.png",
+    "volatility": "High",
+    "price": 2.79
+  },
+  {
+    "name": "Space Cadet",
+    "image": "/assets/cases/space_cadet.png",
+    "volatility": "High",
+    "price": 9.76
+  },
+  {
+    "name": "Seasonal Wonders",
+    "image": "/assets/cases/seasonal_wonders.png",
+    "volatility": "Medium",
+    "price": 4.32
+  },
+  {
+    "name": "Prehistoric Power",
+    "image": "/assets/cases/prehistoric_power.png",
+    "volatility": "Extreme",
+    "price": 186.86
+  },
+  {
+    "name": "Junkyard Jackpot",
+    "image": "/assets/cases/junkyard_jackpot.png",
+    "volatility": "Extreme",
+    "price": 31.71
+  },
+  {
+    "name": "Candy Shop",
+    "image": "/assets/cases/candy_shop.png",
+    "volatility": "High",
+    "price": 1.34
+  },
+  {
+    "name": "Devil's Bargain",
+    "image": "/assets/cases/devils_bargain.png",
+    "volatility": "High",
+    "price": 1.69
+  },
+  {
+    "name": "Angelic Grace",
+    "image": "/assets/cases/angelic_grace.png",
+    "volatility": "High",
+    "price": 137.9
+  },
+  {
+    "name": "Tech Savvy",
+    "image": "/assets/cases/tech_savvy.png",
+    "volatility": "High",
+    "price": 105.02
+  },
+  {
+    "name": "Nature's Blessing",
+    "image": "/assets/cases/natures_blessing.png",
+    "volatility": "High",
+    "price": 3.66
+  },
+  {
+    "name": "Party Time",
+    "image": "/assets/cases/party_time.png",
+    "volatility": "High",
+    "price": 449.34
+  },
+  {
+    "name": "Skeletal Remains",
+    "image": "/assets/cases/skeletal_remains.png",
+    "volatility": "Medium",
+    "price": 2.69
+  },
+  {
+    "name": "Frozen Tundra",
+    "image": "/assets/cases/frozen_tundra.png",
+    "volatility": "Medium",
+    "price": 0.62
+  },
+  {
+    "name": "Charm Collector",
+    "image": "/assets/cases/charm_collector.png",
+    "volatility": "Medium",
+    "price": 9.25
+  },
+  {
+    "name": "Ride in Style",
+    "image": "/assets/cases/ride_in_style.png",
+    "volatility": "High",
+    "price": 76.99
+  },
+  {
+    "name": "Tiny Treasures",
+    "image": "/assets/cases/tiny_treasures.png",
+    "volatility": "High",
+    "price": 0.37
+  },
+  {
+    "name": "Firework Spectacular",
+    "image": "/assets/cases/firework_spectacular.png",
+    "volatility": "Medium",
+    "price": 0.64
+  },
+  {
+    "name": "Heartbreak Hotel",
+    "image": "/assets/cases/heartbreak_hotel.png",
+    "volatility": "Low",
+    "price": 0.9
+  },
+  {
+    "name": "Stable of Champions",
+    "image": "/assets/cases/stable_of_champions.png",
+    "volatility": "High",
+    "price": 74.19
+  },
+  {
+    "name": "Beach Paradise",
+    "image": "/assets/cases/beach_paradise.png",
+    "volatility": "Extreme",
+    "price": 187.59
+  },
+  {
+    "name": "Love is in the Air",
+    "image": "/assets/cases/love_is_in_the_air.png",
+    "volatility": "High",
+    "price": 80.21
+  },
+  {
+    "name": "Shiny Diamonds",
+    "image": "/assets/cases/shiny_diamonds.png",
+    "volatility": "High",
+    "price": 55.2
+  },
+  {
+    "name": "Dancemaster's 20%",
+    "image": "/assets/cases/dancemasters_20.png",
+    "volatility": "Low",
+    "price": 129.17
+  },
+  {
+    "name": "Flaming Hot",
+    "image": "/assets/cases/flaming_hot.png",
+    "volatility": "High",
+    "price": 6.28
+  },
+  {
+    "name": "Lucky Rods",
+    "image": "/assets/cases/lucky_rods.png",
+    "volatility": "Low",
+    "price": 11.12
+  },
+  {
+    "name": "Box of Technology",
+    "image": "/assets/cases/box_of_technology.png",
+    "volatility": "Medium",
+    "price": 86.81
+  },
+  {
+    "name": "Stardust",
+    "image": "/assets/cases/stardust.png",
+    "volatility": "Medium",
+    "price": 16.98
+  },
+  {
+    "name": "Noob to Pro",
+    "image": "/assets/cases/noob_to_pro.png",
+    "volatility": "Extreme",
+    "price": 0.03
+  },
+  {
+    "name": "Feeling Lucky",
+    "image": "/assets/cases/feeling_lucky.png",
+    "volatility": "Extreme",
+    "price": 0.12
+  },
+  {
+    "name": "Premium Weathers",
+    "image": "/assets/cases/premium_weathers.png",
+    "volatility": "Medium",
+    "price": 45.84
+  },
+  {
+    "name": "Budget Weather",
+    "image": "/assets/cases/budget_weather.png",
+    "volatility": "Extreme",
+    "price": 0.4
+  },
+  {
+    "name": "Quest For Legendary",
+    "image": "/assets/cases/quest_for_legendary.png",
+    "volatility": "Medium",
+    "price": 2729.17
+  },
+  {
+    "name": "Ringmaster's Collection",
+    "image": "/assets/cases/ringmasters_collection.png",
+    "volatility": "Medium",
+    "price": 11.34
+  },
+  {
+    "name": "Baller Angel VS Devil 50%",
+    "image": "/assets/cases/baller_angel_vs_devil_50.png",
+    "volatility": "Medium",
+    "price": 494.8
+  },
+  {
+    "name": "Angel VS Devil 50%",
+    "image": "/assets/cases/angel_vs_devil_50.png",
+    "volatility": "Medium",
+    "price": 0.37
+  },
+  {
+    "name": "50% Dragon",
+    "image": "/assets/cases/50_dragon.png",
+    "volatility": "Medium",
+    "price": 50.27
+  },
+  {
+    "name": "50% Apple",
+    "image": "/assets/cases/50_apple.png",
+    "volatility": "Medium",
+    "price": 6.26
+  },
+  {
+    "name": "Peasant's Treasure",
+    "image": "/assets/cases/peasants_treasure.png",
+    "volatility": "Medium",
+    "price": 41.92
+  },
+  {
+    "name": "Aura Farming",
+    "image": "/assets/cases/aura_farming.png",
+    "volatility": "High",
+    "price": 153.68
+  },
+  {
+    "name": "Super Golden Booty Chest",
+    "image": "/assets/cases/super_golden_booty_chest.png",
+    "volatility": "High",
+    "price": 2.14
+  },
+  {
+    "name": "Fast Cars",
+    "image": "/assets/cases/fast_cars.png",
+    "volatility": "Medium",
+    "price": 644
+  },
+  {
+    "name": "Super Summer Surprise",
+    "image": "/assets/cases/super_summer_surprise.png",
+    "volatility": "Extreme",
+    "price": 2.8
+  },
+  {
+    "name": "Dusty Box in the Attic",
+    "image": "/assets/cases/dusty_box_in_the_attic.png",
+    "volatility": "Extreme",
+    "price": 168.24
+  },
+  {
+    "name": "Golden Booty Chest",
+    "image": "/assets/cases/golden_booty_chest.png",
+    "volatility": "Extreme",
+    "price": 0.13
+  },
+  {
+    "name": "Summer Surprise",
+    "image": "/assets/cases/summer_surprise.png",
+    "volatility": "Extreme",
+    "price": 0.46
+  },
+  {
+    "name": "Race Tracks",
+    "image": "/assets/cases/race_tracks.png",
+    "volatility": "Extreme",
+    "price": 4.2
+  },
+  {
+    "name": "Bladesmith's Arsenal",
+    "image": "/assets/cases/bladesmiths_arsenal.png",
+    "volatility": "Medium",
+    "price": 88.67
+  },
+  {
+    "name": "King's Crown",
+    "image": "/assets/cases/kings_crown.png",
+    "volatility": "Extreme",
+    "price": 80.51
+  },
+  {
+    "name": "Ultraviolet",
+    "image": "/assets/cases/ultraviolet.png",
+    "volatility": "Medium",
+    "price": 112.43
+  },
+  {
+    "name": "Baller",
+    "image": "/assets/cases/baller.png",
+    "volatility": "Medium",
+    "price": 2319.07
+  },
+  {
+    "name": "Draconic",
+    "image": "/assets/cases/draconic.png",
+    "volatility": "High",
+    "price": 87.24
+  },
+  {
+    "name": "Neptune's Treasure",
+    "image": "/assets/cases/neptunes_treasure.png",
+    "volatility": "Medium",
+    "price": 6853.1
+  },
+  {
+    "name": "Game of Dragons",
+    "image": "/assets/cases/game_of_dragons.png",
+    "volatility": "Extreme",
+    "price": 6.51
+  },
+  {
+    "name": "Teeny Tiny Wings",
+    "image": "/assets/cases/teeny_tiny_wings.png",
+    "volatility": "Medium",
+    "price": 27.1
+  },
+  {
+    "name": "Cappucino Assasino",
+    "image": "/assets/cases/cappucino_assasino.png",
+    "volatility": "Extreme",
+    "price": 0.02
+  },
+  {
+    "name": "Golden Touch",
+    "image": "/assets/cases/golden_touch.png",
+    "volatility": "Low",
+    "price": 1005.57
+  },
+  {
+    "name": "10% Da Vinci",
+    "image": "/assets/cases/10_da_vinci.png",
+    "volatility": "High",
+    "price": 627.35
+  },
+  {
+    "name": "High Caliber",
+    "image": "/assets/cases/high_caliber.png",
+    "volatility": "Medium",
+    "price": 5.83
+  },
+  {
+    "name": "Fiery Phoenix",
+    "image": "/assets/cases/fiery_phoenix.png",
+    "volatility": "Medium",
+    "price": 344.44
+  },
+  {
+    "name": "Space Wars",
+    "image": "/assets/cases/space_wars.png",
+    "volatility": "Medium",
+    "price": 0.1
+  },
+  {
+    "name": "Jammers",
+    "image": "/assets/cases/jammers.png",
+    "volatility": "High",
+    "price": 7.68
+  },
+  {
+    "name": "Crystal Hunter",
+    "image": "/assets/cases/crystal_hunter.png",
+    "volatility": "High",
+    "price": 0.3
+  }
+]
