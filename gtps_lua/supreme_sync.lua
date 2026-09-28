@@ -1,8 +1,7 @@
 -- ============================================================
 -- SUPREME CASINO - IN-GAME GTPS CLOUD SYNC ENGINE
--- Universal Multi-Hook Architecture (Command + Chat + Action)
--- Guaranteed to work across all GrowServer / GTPS variants
--- Default GTPS Port: 25741
+-- Universal Multi-Hook Architecture (Command + Chat + Action + Packet)
+-- Server Port: 25741
 -- ============================================================
 
 local ITEM_WL  = 242
@@ -22,10 +21,41 @@ local accounts = {}
 local playerLinks = {}
 local dirty = false
 
--- Safe HTTP POST with mandatory 3rd argument (content-type)
+-- ============================================================
+-- SAFE HTTP HELPERS (Blocks Private/Local IPs to prevent C++ Crash)
+-- ============================================================
+local function isLocalOrPrivateUrl(url)
+    if not url then return true end
+    local u = tostring(url):lower()
+    if u:find("localhost") or u:find("127%.0%.0%.1") or u:find("0%.0%.0%.0") then
+        return true
+    end
+    if u:find("192%.168%.") or u:find("10%.%d+%.") or u:find("172%.1[6-9]%.") or u:find("172%.2%d%.") or u:find("172%.3[0-1]%.") then
+        return true
+    end
+    -- Must have a public dot domain like .com, .onrender.com, etc.
+    if not u:find("^https?://[%a%d%-]+%.") then
+        return true
+    end
+    return false
+end
+
 local function safeHttpPost(url, jsonPayload)
+    if not url or isLocalOrPrivateUrl(url) then
+        -- Silently skip localhost to avoid C++ "Blocked request to local or private IP"
+        return
+    end
     if type(http) == "table" and type(http.post) == "function" then
         http.post(url, tostring(jsonPayload or "{}"), "application/json")
+    end
+end
+
+local function safeHttpGet(url)
+    if not url or isLocalOrPrivateUrl(url) then
+        return
+    end
+    if type(http) == "table" and type(http.get) == "function" then
+        http.get(url)
     end
 end
 
@@ -171,10 +201,8 @@ local function showLinkDialog(player)
     table.insert(d, "add_spacer|small|\n")
     table.insert(d, "add_text_input|inp_link_code|6-Digit Code:||6|\n")
     table.insert(d, "add_spacer|small|\n")
-    table.insert(d, "add_button|submit_link|`2Link Account|staticYellowFrame|0|0\n")
-    table.insert(d, "add_button|close_link|`wCancel|staticYellowFrame|0|0\n")
     table.insert(d, "add_quick_exit|\n")
-    table.insert(d, "end_dialog|supreme_link_dialog|||\n")
+    table.insert(d, "end_dialog|supreme_link_dialog|Cancel|Link Account|\n")
 
     player:onDialogRequest(table.concat(d))
 end
@@ -203,9 +231,8 @@ local function showCasinoDialog(player)
     table.insert(d, "add_smalltext|`w/balance `o- View live casino balance|\n")
     table.insert(d, "add_spacer|small|\n")
     table.insert(d, "add_button|open_link_menu|`6Enter Link Code|staticYellowFrame|0|0\n")
-    table.insert(d, "add_button|close_casino|`wClose|staticYellowFrame|0|0\n")
     table.insert(d, "add_quick_exit|\n")
-    table.insert(d, "end_dialog|supreme_casino_menu|||\n")
+    table.insert(d, "end_dialog|supreme_casino_menu|Close||\n")
 
     player:onDialogRequest(table.concat(d))
 end
@@ -230,7 +257,7 @@ local function handleLinkCode(player, code)
         player:onConsoleMessage("`2[SUPREME] `wLinking GrowID `6" .. cleanGrowID .. "`w with web code `6" .. code .. "`w...``")
     end
 
-    -- Webhook to Node.js backend
+    -- Webhook to Node.js backend (safely checks for non-localhost URL)
     local postPayload = string.format('{"growid":"%s","code":"%s"}', cleanGrowID, code)
     safeHttpPost(WEB_API_URL .. "/gtps/link-growid", postPayload)
 
@@ -282,7 +309,7 @@ local function processCasinoCommand(world, player, fullCommand)
 
     -- 3. /LINK [code]
     if cmdL == "link" or cmdL == "setgrowid" then
-        local code = arg:match("(%d%d%d%d%d%d)")
+        local code = arg:match("(%d%d%d%d%d?%d?)")
         if not code or code == "" then
             showLinkDialog(player)
             if type(player.playAudio) == "function" then player:playAudio("dry_tick.wav") end
@@ -300,10 +327,7 @@ local function processCasinoCommand(world, player, fullCommand)
         end
         if type(player.playAudio) == "function" then player:playAudio("dry_tick.wav") end
         
-        -- Query web server
-        if type(http) == "table" and type(http.get) == "function" then
-            http.get(WEB_API_URL .. "/gtps/balance/" .. cleanGrowID)
-        end
+        safeHttpGet(WEB_API_URL .. "/gtps/balance/" .. cleanGrowID)
         return true
     end
 
@@ -483,11 +507,9 @@ local function resolvePlayerAndCommand(a1, a2, a3)
     local targetPlayer = nil
     local commandText = nil
 
-    -- Check if a1 is Player
     if (type(a1) == "userdata" or type(a1) == "table") and (type(a1.getCleanName) == "function" or type(a1.getUserID) == "function" or type(a1.onConsoleMessage) == "function") then
         targetPlayer = a1
         commandText = a2
-    -- Check if a2 is Player (a1 is World, a2 is Player)
     elseif (type(a2) == "userdata" or type(a2) == "table") and (type(a2.getCleanName) == "function" or type(a2.getUserID) == "function" or type(a2.onConsoleMessage) == "function") then
         targetWorld = a1
         targetPlayer = a2
@@ -575,7 +597,7 @@ if type(onPlayerChatCallback) == "function" then
             local firstChar = msg:sub(1, 1)
             if firstChar == "/" or firstChar == "!" or firstChar == "." then
                 local handled = processCasinoCommand(world, player, msg)
-                if handled then return true end -- Intercepted! Prevents "Unknown command"
+                if handled then return true end
             end
         end
         return false
@@ -601,79 +623,134 @@ if type(onPlayerActionCallback) == "function" then
 end
 
 -- ============================================================
--- HOOK 4: DIALOG HANDLER (Supports both table and raw string data)
+-- DIALOG PROCESSOR (Handles All GTPS Signature Formats)
 -- ============================================================
-local function resolvePlayerAndDialog(a1, a2, a3)
-    local targetPlayer = nil
-    local dialogData = nil
+local function handleCasinoDialog(player, dName, dataTable)
+    if not player then return false end
 
-    if (type(a1) == "userdata" or type(a1) == "table") and (type(a1.getCleanName) == "function" or type(a1.getUserID) == "function" or type(a1.onDialogRequest) == "function") then
-        targetPlayer = a1
-        dialogData = a2
-    elseif (type(a2) == "userdata" or type(a2) == "table") and (type(a2.getCleanName) == "function" or type(a2.getUserID) == "function" or type(a2.onDialogRequest) == "function") then
-        targetPlayer = a2
-        dialogData = a3
-    end
+    local actualName = tostring(dName or "")
+    local data = {}
 
-    return targetPlayer, dialogData
-end
-
-local function parseDialogData(data)
-    local result = {}
-    if type(data) == "table" then
-        for k, v in pairs(data) do
-            result[tostring(k)] = tostring(v)
+    if type(dataTable) == "table" then
+        for k, v in pairs(dataTable) do
+            data[tostring(k)] = tostring(v)
         end
-        result.dialog_name = tostring(data.dialog_name or data["dialog_name"] or "")
-        result.buttonClicked = tostring(data.buttonClicked or data["buttonClicked"] or "")
-    elseif type(data) == "string" then
-        result.dialog_name = data:match("dialog_name|([^\r\n|]+)") or ""
-        result.buttonClicked = data:match("buttonClicked|([^\r\n|]+)") or ""
-        for k, v in data:gmatch("([^\r\n|]+)|([^\r\n|]*)") do
-            result[k] = v
+        if actualName == "" or actualName == "nil" then
+            actualName = tostring(dataTable.dialog_name or dataTable["dialog_name"] or "")
+        end
+    elseif type(dataTable) == "string" then
+        for k, v in dataTable:gmatch("([^\r\n|]+)|([^\r\n|]*)") do
+            data[k] = v
+        end
+        if actualName == "" or actualName == "nil" then
+            actualName = dataTable:match("dialog_name|([^\r\n|]+)") or ""
         end
     end
-    return result
+
+    if actualName == "" and type(dName) == "string" and dName:find("dialog_name|") then
+        actualName = dName:match("dialog_name|([^\r\n|]+)") or ""
+        for k, v in dName:gmatch("([^\r\n|]+)|([^\r\n|]*)") do
+            data[k] = v
+        end
+    end
+
+    -- 1. LINK DIALOG
+    if actualName == "supreme_link_dialog" or actualName:find("supreme_link") then
+        local btn = tostring(data.buttonClicked or "")
+        if btn == "Cancel" or btn == "close_link" then return true end
+
+        local code = data.inp_link_code or data["inp_link_code"] or ""
+        code = string.gsub(tostring(code), "%s+", "")
+
+        if code ~= "" then
+            handleLinkCode(player, code)
+            return true
+        else
+            if type(player.onConsoleMessage) == "function" then
+                player:onConsoleMessage("`4[SUPREME] Please enter your 6-digit link code!``")
+            end
+            return true
+        end
+    end
+
+    -- 2. CASINO MENU DIALOG
+    if actualName == "supreme_casino_menu" or actualName:find("supreme_casino") then
+        local btn = tostring(data.buttonClicked or "")
+        if btn == "Close" or btn == "close_casino" then return true end
+
+        if btn == "open_link_menu" then
+            showLinkDialog(player)
+            return true
+        end
+
+        return true
+    end
+
+    return false
 end
 
+-- ============================================================
+-- HOOK 4: onPlayerDialogCallback (Multi-Signature Dispatcher)
+-- ============================================================
 if type(onPlayerDialogCallback) == "function" then
-    onPlayerDialogCallback(function(a1, a2, a3)
-        local player, rawData = resolvePlayerAndDialog(a1, a2, a3)
-        if not player or not rawData then return false end
+    onPlayerDialogCallback(function(arg1, arg2, arg3)
+        -- Format A: (player, dialogName, dataTable)
+        if type(arg1) == "userdata" and type(arg2) == "string" then
+            local handled = handleCasinoDialog(arg1, arg2, arg3)
+            if handled then return true end
+        end
 
-        local data = parseDialogData(rawData)
-        local dName = data.dialog_name or ""
-        local btn = data.buttonClicked or ""
+        -- Format B: (world, player, dataTable)
+        if type(arg1) == "userdata" and type(arg2) == "userdata" then
+            local dName = ""
+            if type(arg3) == "table" then
+                dName = tostring(arg3.dialog_name or arg3["dialog_name"] or "")
+            elseif type(arg3) == "string" then
+                dName = tostring(arg3:match("dialog_name|([^\r\n|]+)") or "")
+            end
+            local handled = handleCasinoDialog(arg2, dName, arg3)
+            if handled then return true end
+        end
 
-        if dName == "supreme_link_dialog" then
-            if btn == "close_link" then return true end
+        -- Format C: (player, dataTable)
+        if type(arg1) == "userdata" then
+            local dName = ""
+            if type(arg2) == "table" then
+                dName = tostring(arg2.dialog_name or arg2["dialog_name"] or "")
+            elseif type(arg2) == "string" then
+                dName = tostring(arg2:match("dialog_name|([^\r\n|]+)") or "")
+            end
+            local handled = handleCasinoDialog(arg1, dName, arg2)
+            if handled then return true end
+        end
 
-            if btn == "submit_link" then
-                local code = data.inp_link_code or ""
-                if code == "" then
-                    if type(player.onConsoleMessage) == "function" then
-                        player:onConsoleMessage("`4[SUPREME] Please enter a valid 6-digit link code!``")
-                    end
-                    return true
-                end
+        return false
+    end)
+end
+
+-- ============================================================
+-- HOOK 5: onPlayerPacketCallback (Direct Dialog Packet Interceptor)
+-- ============================================================
+if type(onPlayerPacketCallback) == "function" then
+    onPlayerPacketCallback(function(arg1, arg2, arg3)
+        local player = nil
+        local packet = nil
+        if type(arg1) == "userdata" and type(arg2) == "string" then
+            player = arg1; packet = arg2
+        elseif type(arg2) == "userdata" and type(arg3) == "string" then
+            player = arg2; packet = arg3
+        elseif type(arg1) == "string" then
+            packet = arg1
+        end
+
+        if type(packet) == "string" and packet:find("dialog_name|supreme_link_dialog") then
+            local code = packet:match("inp_link_code|([^\r\n|]+)") or ""
+            code = string.gsub(tostring(code), "%s+", "")
+            if player and code ~= "" then
                 handleLinkCode(player, code)
                 return true
             end
-
-            return true
         end
-
-        if dName == "supreme_casino_menu" then
-            if btn == "close_casino" then return true end
-
-            if btn == "open_link_menu" then
-                showLinkDialog(player)
-                return true
-            end
-
-            return true
-        end
-
         return false
     end)
 end
