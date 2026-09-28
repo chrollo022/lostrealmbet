@@ -510,46 +510,45 @@ local function resolvePlayerAndCommand(a1, a2, a3)
 end
 
 -- ============================================================
--- COMMAND REGISTRATION (Safe Multi-Format Calling)
+-- COMMAND REGISTRATION (Exact native format: NO pcall)
 -- ============================================================
-local function safeRegisterCommand(cmdName, desc)
-    if type(registerLuaCommand) ~= "function" then return end
-    
-    -- Format 1: Table with roleRequired = 0 (accessible to ALL players)
-    pcall(registerLuaCommand, {
-        command = cmdName,
-        roleRequired = 0,
-        role = 0,
-        description = desc or ("Supreme Casino: /" .. cmdName)
-    })
-    
-    -- Format 2: Table with roleRequired = 1 (standard role)
-    pcall(registerLuaCommand, {
-        command = cmdName,
-        roleRequired = 1,
-        role = 1,
-        description = desc or ("Supreme Casino: /" .. cmdName)
-    })
-
-    -- Format 3: Direct string registration
-    pcall(registerLuaCommand, cmdName)
+local function registerCmd(cmdName, desc)
+    if type(registerLuaCommand) == "function" then
+        registerLuaCommand({
+            command = cmdName,
+            roleRequired = 1,
+            role = 1,
+            description = desc or ("Supreme Casino: /" .. cmdName)
+        })
+    end
 end
 
-safeRegisterCommand("deposit", "Deposit locks to Supreme Casino: /deposit <amount> [wl|dl|bgl]")
-safeRegisterCommand("dep", "Deposit locks: /dep <amount> [wl|dl|bgl]")
-safeRegisterCommand("withdraw", "Withdraw locks from Supreme Casino: /withdraw <amount> [wl|dl|bgl]")
-safeRegisterCommand("wd", "Withdraw locks: /wd <amount> [wl|dl|bgl]")
-safeRegisterCommand("with", "Withdraw locks: /with <amount> [wl|dl|bgl]")
-safeRegisterCommand("link", "Link character with Supreme Casino: /link <code>")
-safeRegisterCommand("balance", "Check Supreme Casino balance: /balance")
-safeRegisterCommand("bal", "Check Supreme Casino balance: /bal")
-safeRegisterCommand("casino", "Open Supreme Casino panel: /casino")
-safeRegisterCommand("supreme", "Open Supreme Casino panel: /supreme")
-safeRegisterCommand("casinohelp", "Supreme Casino help: /casinohelp")
+local function registerDevCmd(cmdName, desc)
+    if type(registerLuaCommand) == "function" then
+        registerLuaCommand({
+            command = cmdName,
+            roleRequired = DEV_ROLE,
+            role = DEV_ROLE,
+            description = desc or ("Supreme Casino Dev: /" .. cmdName)
+        })
+    end
+end
 
--- Dev commands
-safeRegisterCommand("casinoaddbal", "Add player balance: /casinoaddbal <growid> <amount>")
-safeRegisterCommand("casinorembal", "Remove player balance: /casinorembal <growid> <amount>")
+registerCmd("deposit", "Deposit locks to Supreme Casino: /deposit <amount> [wl|dl|bgl]")
+registerCmd("dep", "Deposit locks: /dep <amount> [wl|dl|bgl]")
+registerCmd("withdraw", "Withdraw locks from Supreme Casino: /withdraw <amount> [wl|dl|bgl]")
+registerCmd("wd", "Withdraw locks: /wd <amount> [wl|dl|bgl]")
+registerCmd("with", "Withdraw locks: /with <amount> [wl|dl|bgl]")
+registerCmd("link", "Link character with Supreme Casino: /link <code>")
+registerCmd("balance", "Check Supreme Casino balance: /balance")
+registerCmd("bal", "Check Supreme Casino balance: /bal")
+registerCmd("casino", "Open Supreme Casino panel: /casino")
+registerCmd("supreme", "Open Supreme Casino panel: /supreme")
+registerCmd("casinohelp", "Supreme Casino help: /casinohelp")
+
+-- Dev commands (Role 51)
+registerDevCmd("casinoaddbal", "Add player balance: /casinoaddbal <growid> <amount>")
+registerDevCmd("casinorembal", "Remove player balance: /casinorembal <growid> <amount>")
 
 -- ============================================================
 -- HOOK 1: onPlayerCommandCallback
