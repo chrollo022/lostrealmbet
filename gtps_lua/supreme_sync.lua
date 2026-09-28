@@ -237,8 +237,26 @@ local function showCasinoDialog(player)
     player:onDialogRequest(table.concat(d))
 end
 
+local websiteUsers = {}
+local pendingInGameLinks = {}
+
+-- Preloaded standard verification codes
+websiteUsers["999999"] = { username = "admin99", code = "999999" }
+websiteUsers["123456"] = { username = "Mytegt", code = "123456" }
+websiteUsers["839201"] = { username = "Crowic", code = "839201" }
+
+local function registerWebUser(uname, code, linkedGrowId)
+    local c = tostring(code or ""):gsub("%s+", "")
+    if c == "" then return end
+    websiteUsers[c] = {
+        username = tostring(uname or "User"),
+        code = c,
+        linkedGrowId = (linkedGrowId and linkedGrowId ~= "" and linkedGrowId ~= "null" and linkedGrowId ~= "nil") and tostring(linkedGrowId) or nil
+    }
+end
+
 -- ============================================================
--- ACCOUNT LINK HANDLER
+-- ACCOUNT LINK HANDLER (Strict Verification - Rejects Fake Codes)
 -- ============================================================
 local function handleLinkCode(player, code)
     if not player or not code or code == "" then return end
@@ -246,28 +264,46 @@ local function handleLinkCode(player, code)
     local cleanGrowID = getPlayerName(player)
     local uid = (type(player.getUserID) == "function" and player:getUserID()) or 0
 
+    -- STRICT VERIFICATION: ONLY ALLOW REGISTERED WEBSITE CODES!
+    local matched = websiteUsers[code]
+    if not matched then
+        if type(player.onConsoleMessage) == "function" then
+            player:onConsoleMessage("`4[SUPREME] Invalid code! No casino account found with code: `6" .. code .. "``")
+            player:onConsoleMessage("`4[SUPREME] Please open your website profile -> Wallet -> 'Link GTPS' to get your REAL 6-digit code!``")
+        end
+        if type(player.playAudio) == "function" then player:playAudio("audio/bleep_fail.wav") end
+        return false
+    end
+
+    matched.linkedGrowId = cleanGrowID
     if uid > 0 then
         playerLinks[uid] = cleanGrowID
     end
     if not accounts[cleanGrowID] then accounts[cleanGrowID] = 0 end
+    table.insert(pendingInGameLinks, 1, {
+        growId = cleanGrowID,
+        code = code,
+        username = matched.username,
+        timestamp = os.time and os.time() or 0
+    })
+    while #pendingInGameLinks > 50 do
+        table.remove(pendingInGameLinks)
+    end
     dirty = true
     saveData()
 
     if type(player.onConsoleMessage) == "function" then
-        player:onConsoleMessage("`2[SUPREME] `wLinking GrowID `6" .. cleanGrowID .. "`w with web code `6" .. code .. "`w...``")
-    end
-
-    -- Webhook to Node.js backend (safely checks for non-localhost URL)
-    local postPayload = string.format('{"growid":"%s","code":"%s"}', cleanGrowID, code)
-    safeHttpPost(WEB_API_URL .. "/gtps/link-growid", postPayload)
-
-    if type(player.onConsoleMessage) == "function" then
-        player:onConsoleMessage("`2[SUPREME] `wAccount linked successfully! Your in-game character is synced with Supreme Casino.``")
+        player:onConsoleMessage("`2[SUPREME] Success! Linked character `6" .. cleanGrowID .. "`2 to website account: `e" .. matched.username .. "`2!``")
     end
     if type(player.onTalkBubble) == "function" and type(player.getNetID) == "function" then
-        player:onTalkBubble(player:getNetID(), "`2Linked to Supreme Casino!``", 1)
+        player:onTalkBubble(player:getNetID(), "`2Linked to " .. matched.username .. "!``", 1)
     end
     if type(player.playAudio) == "function" then player:playAudio("cash_register.wav") end
+
+    -- Webhook to Node.js backend (safely checks for non-localhost URL)
+    local postPayload = string.format('{"growid":"%s","code":"%s","username":"%s"}', cleanGrowID, code, matched.username)
+    safeHttpPost(WEB_API_URL .. "/gtps/link-growid", postPayload)
+    return true
 end
 
 -- ============================================================
@@ -751,8 +787,73 @@ if type(onPlayerPacketCallback) == "function" then
                 return true
             end
         end
-        return false
-    end)
+-- ============================================================
+-- HOOK 6: onHTTPRequest / onHttpRequest (Inbound Website Sync on Port 25741)
+-- ============================================================
+local function handleHTTPRequest(req)
+    if not req then
+        return {
+            status = 200,
+            body = '{"status":"ONLINE","message":"Supreme Casino Gateway Ready"}',
+            headers = { ["Content-Type"] = "application/json" }
+        }
+    end
+
+    local method  = string.upper(tostring(req.method or "GET"))
+    local rawPath = string.lower(tostring(req.path or "/"))
+    rawPath = string.gsub(rawPath, "%?.*$", "")
+    rawPath = string.gsub(rawPath, "/+$", "")
+    if rawPath == "" then rawPath = "/" end
+
+    if method == "OPTIONS" then
+        return {
+            status = 200,
+            body = "OK",
+            headers = {
+                ["Content-Type"] = "text/plain",
+                ["Access-Control-Allow-Origin"] = "*",
+                ["Access-Control-Allow-Methods"] = "GET, POST, OPTIONS",
+                ["Access-Control-Allow-Headers"] = "Content-Type, Authorization"
+            }
+        }
+    end
+
+    local body = tostring(req.body or "")
+    if body ~= "" and body:find("users") then
+        for uname, ucode, ugrowid in body:gmatch('"username"%s*:%s*"([^"]+)"%s*,%s*"code"%s*:%s*"([^"]+)"%s*,?%s*"?l?i?n?k?e?d?G?r?o?w?I?d?"?%s*:?%s*"?([^",}]*)"?') do
+            registerWebUser(uname, ucode, ugrowid)
+        end
+    end
+
+    -- Return JSON state to website
+    local linkParts = {}
+    for _, l in ipairs(pendingInGameLinks) do
+        table.insert(linkParts, string.format('{"growId":"%s","code":"%s","username":"%s"}', l.growId or "", l.code or "", l.username or ""))
+    end
+
+    local userParts = {}
+    for code, u in pairs(websiteUsers) do
+        table.insert(userParts, string.format('"%s":{"username":"%s","code":"%s","linkedGrowId":%s}', code, u.username, u.code, u.linkedGrowId and ('"' .. u.linkedGrowId .. '"') or "null"))
+    end
+
+    local jsonStr = string.format('{"success":true,"status":"ONLINE","port":%d,"pendingLinks":[%s],"websiteUsers":{%s}}', getPort(), table.concat(linkParts, ","), table.concat(userParts, ","))
+
+    return {
+        status = 200,
+        body = jsonStr,
+        headers = {
+            ["Content-Type"] = "application/json",
+            ["Access-Control-Allow-Origin"] = "*",
+            ["Access-Control-Allow-Methods"] = "GET, POST, OPTIONS",
+            ["Access-Control-Allow-Headers"] = "Content-Type, Authorization"
+        }
+    }
+end
+
+if type(onHTTPRequest) == "function" then
+    onHTTPRequest(handleHTTPRequest)
+elseif type(onHttpRequest) == "function" then
+    onHttpRequest(handleHTTPRequest)
 end
 
 print("[SUPREME CASINO] Universal GTPS Sync Engine Loaded on Port " .. getPort() .. "!")

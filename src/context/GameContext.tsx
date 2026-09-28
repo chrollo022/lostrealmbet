@@ -102,6 +102,7 @@ interface GameContextType {
   deposit: (dlsAmount: number) => void;
   withdraw: (dlsAmount: number, growId: string, world: string) => { success: boolean; message: string };
   tip: (dlsAmount: number, targetUser: string, message?: string) => { success: boolean; message: string };
+  updateUserGrowId: (growId: string) => void;
 
   // Gameplay
   canAfford: (dlsAmount: number) => boolean;
@@ -439,6 +440,41 @@ export const GameProvider: React.FC<{ children: React.ReactNode }> = ({ children
       localStorage.removeItem('voidps_active_session');
     } catch {}
   };
+
+  const updateUserGrowId = (growId: string) => {
+    if (!currentUser) return;
+    const cleanGrow = String(growId || '').trim();
+    if (!cleanGrow) return;
+    const updated = { ...currentUser, growId: cleanGrow, isLinked: true };
+    setCurrentUser(updated);
+    try {
+      localStorage.setItem('supreme_active_session', JSON.stringify(updated));
+      localStorage.setItem('voidps_active_session', JSON.stringify(updated));
+    } catch {}
+    setAccounts((prev) => {
+      const next = prev.map((a) => a.username.toLowerCase() === updated.username.toLowerCase() ? updated : a);
+      try {
+        localStorage.setItem('supreme_registered_accounts', JSON.stringify(next));
+      } catch {}
+      return next;
+    });
+    showToast(`Linked with GTPS Character: ${cleanGrow}!`, 'success', 'GTPS Account Connected');
+  };
+
+  // Sync user verification code to GTPS backend router
+  useEffect(() => {
+    if (currentUser?.linkCode) {
+      fetch('/api/gtps/register-code', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          username: currentUser.username,
+          code: currentUser.linkCode,
+          growId: currentUser.growId || null,
+        }),
+      }).catch(() => {});
+    }
+  }, [currentUser?.username, currentUser?.linkCode, currentUser?.growId]);
 
   // Admin Controls
   const adminAddBalance = (username: string, amountDls: number): boolean => {
@@ -824,6 +860,11 @@ export const GameProvider: React.FC<{ children: React.ReactNode }> = ({ children
                 try { localStorage.setItem('supreme_live_bets', JSON.stringify(updated)); } catch {}
                 return updated;
               });
+            } else if (data.type === 'GTPS_LINK' && data.payload) {
+              const { growId, code } = data.payload;
+              if (growId) {
+                updateUserGrowId(growId);
+              }
             }
           } catch {}
         };
@@ -1078,6 +1119,7 @@ export const GameProvider: React.FC<{ children: React.ReactNode }> = ({ children
         deposit,
         withdraw,
         tip,
+        updateUserGrowId,
         canAfford,
         deductBet,
         awardPayout,

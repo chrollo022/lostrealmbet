@@ -85,21 +85,144 @@ app.post('/api/gtps/withdraw-webhook', (req, res) => {
   res.json({ success: true, growId, currency, amount, status: 'dispatched' });
 });
 
+// In-memory registered link codes from website accounts (code -> { username, code, growId, timestamp })
+const registeredLinkCodes = new Map();
+const linkedGrowIds = new Map(); // code -> growId
+
+app.post('/api/gtps/register-code', (req, res) => {
+  const { username, code, growId } = req.body;
+  if (!code) return res.status(400).json({ error: 'Code required' });
+  const cleanCode = String(code).trim();
+  registeredLinkCodes.set(cleanCode, {
+    username: username || 'User',
+    code: cleanCode,
+    growId: growId || null,
+    timestamp: Date.now(),
+  });
+
+  // Forward to GTPS Server HTTP Router on port 25741 if available
+  const payload = JSON.stringify({
+    users: [{ username: username || 'User', code: cleanCode, linkedGrowId: growId || null }],
+  });
+
+  fetch(`http://127.0.0.1:${gtpsConfig.port}/`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: payload,
+  }).catch(() => {});
+
+  res.json({ success: true, code: cleanCode, registered: true });
+});
+
+app.get('/api/gtps/check-link', async (req, res) => {
+  const code = String(req.query.code || '').trim();
+  if (!code) return res.json({ linked: false });
+
+  // 1. Check local cache
+  if (linkedGrowIds.has(code)) {
+    const growId = linkedGrowIds.get(code);
+    return res.json({ linked: true, growId, code });
+  }
+
+  // 2. Poll GTPS Server on port 25741
+  try {
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 1500);
+    const gtpsRes = await fetch(`http://127.0.0.1:${gtpsConfig.port}/`, { signal: controller.signal });
+    clearTimeout(timeoutId);
+
+    if (gtpsRes.ok) {
+      const data = await gtpsRes.json();
+      if (Array.isArray(data.pendingLinks)) {
+        for (const link of data.pendingLinks) {
+          if (String(link.code).trim() === code && link.growId) {
+            linkedGrowIds.set(code, link.growId);
+            broadcast({
+              type: 'GTPS_LINK',
+              payload: { growId: link.growId, code, timestamp: Date.now() },
+            });
+            return res.json({ linked: true, growId: link.growId, code });
+          }
+        }
+      }
+      if (data.websiteUsers && data.websiteUsers[code] && data.websiteUsers[code].linkedGrowId) {
+        const growId = data.websiteUsers[code].linkedGrowId;
+        linkedGrowIds.set(code, growId);
+        broadcast({
+          type: 'GTPS_LINK',
+          payload: { growId, code, timestamp: Date.now() },
+        });
+        return res.json({ linked: true, growId, code });
+      }
+    }
+  } catch (err) {}
+
+  res.json({ linked: false, code });
+});
+
 app.post('/api/gtps/link-growid', (req, res) => {
   const { growid, code } = req.body;
-  console.log(`[GTPS Link] GrowID ${growid} linked with code ${code}`);
+  const cleanCode = String(code || '').trim();
+  const cleanGrowId = String(growid || '').trim();
+  console.log(`[GTPS Link] GrowID ${cleanGrowId} linked with code ${cleanCode}`);
+
+  if (cleanCode && cleanGrowId) {
+    linkedGrowIds.set(cleanCode, cleanGrowId);
+  }
 
   broadcast({
     type: 'GTPS_LINK',
-    payload: { growId: growid, code, timestamp: Date.now() },
+    payload: { growId: cleanGrowId, code: cleanCode, timestamp: Date.now() },
   });
 
-  res.json({ success: true, growId: growid, code });
+  res.json({ success: true, growId: cleanGrowId, code: cleanCode });
 });
 
 app.get('/api/gtps/balance/:growid', (req, res) => {
   res.json({ success: true, growId: req.params.growid, status: 'active' });
 });
+
+// Periodic sync: Push all website codes to GTPS Server every 3 seconds
+setInterval(async () => {
+  if (registeredLinkCodes.size === 0) return;
+  const userList = [];
+  for (const [code, item] of registeredLinkCodes.entries()) {
+    userList.push({
+      username: item.username,
+      code: item.code,
+      linkedGrowId: linkedGrowIds.get(code) || item.growId || null,
+    });
+  }
+
+  try {
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 1200);
+    const res = await fetch(`http://127.0.0.1:${gtpsConfig.port}/`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ users: userList }),
+      signal: controller.signal,
+    });
+    clearTimeout(timeoutId);
+
+    if (res.ok) {
+      const data = await res.json();
+      if (Array.isArray(data.pendingLinks)) {
+        for (const link of data.pendingLinks) {
+          const lCode = String(link.code).trim();
+          if (lCode && link.growId && !linkedGrowIds.has(lCode)) {
+            linkedGrowIds.set(lCode, link.growId);
+            console.log(`[GTPS Poller] Detected in-game link: ${link.growId} with code ${lCode}`);
+            broadcast({
+              type: 'GTPS_LINK',
+              payload: { growId: link.growId, code: lCode, timestamp: Date.now() },
+            });
+          }
+        }
+      }
+    }
+  } catch (e) {}
+}, 3000);
 
 // Real-Time WebSocket Server
 const wss = new WebSocketServer({ server, path: '/ws' });
