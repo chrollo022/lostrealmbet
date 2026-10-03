@@ -1,6 +1,6 @@
 services:
   - type: web
-    name: supreme-casino
+    name: lostrealm-casino
     runtime: node
     plan: free
     buildCommand: npm install && npm run build
