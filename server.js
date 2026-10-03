@@ -18,7 +18,7 @@ app.use(express.json());
 app.get('/healthz', (req, res) => {
   res.json({
     status: 'ok',
-    server: 'Supreme Casino',
+    server: 'LostRealm Casino',
     timestamp: new Date().toISOString(),
     uptime: process.uptime(),
   });
