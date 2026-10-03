@@ -35,7 +35,7 @@ const liveBetsHistory = [];
 const activeBattles = [];
 
 let gtpsConfig = {
-  port: 25741,
+  port: 17002,
   secretKey: 'supreme_gtps_secret_auth_token_25741',
   status: 'online',
   activeSyncCount: 0,
