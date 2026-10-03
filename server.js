@@ -36,7 +36,7 @@ const activeBattles = [];
 
 let gtpsConfig = {
   port: 17002,
-  secretKey: 'supreme_gtps_secret_auth_token_25741',
+  secretKey: 'lostrealm_gtps_secret_auth_token_17002',
   status: 'online',
   activeSyncCount: 0,
 };
